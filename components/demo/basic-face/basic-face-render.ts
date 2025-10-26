@@ -68,7 +68,7 @@ const drawHatImage = (
   
   // Позиция - меняй 0.9 чтобы поднять/опустить шапку
   const hatX = centerX - hatWidth / 2;
-  const hatY = centerY - faceRadius * 0.9;
+  const hatY = centerY - faceRadius * 0.5;
   
   // Закругление краев
   ctx.save();

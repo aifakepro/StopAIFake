@@ -1,44 +1,55 @@
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
- */
-import { RefObject, useEffect, useState } from 'react';
+*/
+import { RefObject, useEffect, useState, useRef } from 'react';
+
 import { renderBasicFace } from './basic-face-render';
+
 import useFace from '../../../hooks/demo/use-face';
 import useHover from '../../../hooks/demo/use-hover';
 import useTilt from '../../../hooks/demo/use-tilt';
 import { useLiveAPIContext } from '../../../contexts/LiveAPIContext';
 
+// Minimum volume level that indicates audio output is occurring
 const AUDIO_OUTPUT_DETECTION_THRESHOLD = 0.05;
+
+// Amount of delay between end of audio output and setting talking state to false
 const TALKING_STATE_COOLDOWN_MS = 2000;
 
 type BasicFaceProps = {
+  /** The canvas element on which to render the face. */
   canvasRef: RefObject<HTMLCanvasElement | null>;
+  /** The radius of the face. */
   radius?: number;
+  /** The color of the face. */
   color?: string;
-  faceTextureUrl?: string;
-  hatUrl?: string;
 };
 
 export default function BasicFace({
   canvasRef,
   radius = 250,
-  color = '#fff',
-  faceTextureUrl = 'https://i.ibb.co/TDnPTYzR/gptacp.jpg',
-  hatUrl = 'https://i.ibb.co/qLGqJRVy/nvidia.jpg',
+  color,
 }: BasicFaceProps) {
-  const { volume } = useLiveAPIContext();
-  const [isTalking, setIsTalking] = useState(false);
-  const [scale, setScale] = useState(1);
-  const [faceTexture, setFaceTexture] = useState<CanvasPattern | null>(null);
-  const [hatImg, setHatImg] = useState<HTMLImageElement | null>(null);
-  const timeoutRef = useState<NodeJS.Timeout | null>(null)[0];
+  const timeoutRef = useRef<NodeJS.Timeout>(null);
 
+  // Audio output volume
+  const { volume } = useLiveAPIContext();
+
+  // Talking state
+  const [isTalking, setIsTalking] = useState(false);
+
+  const [scale, setScale] = useState(0.1);
+
+  // Face state
   const { eyeScale, mouthScale } = useFace();
   const hoverPosition = useHover();
-  const tiltAngle = useTilt({ maxAngle: 5, speed: 0.075, isActive: isTalking });
+  const tiltAngle = useTilt({
+    maxAngle: 5,
+    speed: 0.075,
+    isActive: isTalking,
+  });
 
-  // Масштаб под размер окна
   useEffect(() => {
     function calculateScale() {
       setScale(Math.min(window.innerWidth, window.innerHeight) / 1000);
@@ -48,48 +59,25 @@ export default function BasicFace({
     return () => window.removeEventListener('resize', calculateScale);
   }, []);
 
-  // Talking state
+  // Detect whether the agent is talking based on audio output volume
+  // Set talking state when volume is detected
   useEffect(() => {
     if (volume > AUDIO_OUTPUT_DETECTION_THRESHOLD) {
       setIsTalking(true);
-      if (timeoutRef) clearTimeout(timeoutRef);
-      timeoutRef = setTimeout(() => setIsTalking(false), TALKING_STATE_COOLDOWN_MS);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      // Enforce a slight delay between end of audio output and setting talking state to false
+      timeoutRef.current = setTimeout(
+        () => setIsTalking(false),
+        TALKING_STATE_COOLDOWN_MS
+      );
     }
   }, [volume]);
 
-  // Загрузка текстуры лица и шапки
+  // Render the face on the canvas
   useEffect(() => {
-    const ctx = canvasRef.current?.getContext('2d');
-    if (!ctx || !faceTextureUrl || !hatUrl) return;
-
-    const faceImg = new Image();
-    const hat = new Image();
-    faceImg.crossOrigin = 'anonymous';
-    hat.crossOrigin = 'anonymous';
-    faceImg.src = faceTextureUrl;
-    hat.src = hatUrl;
-
-    faceImg.onload = () => {
-      const pattern = ctx.createPattern(faceImg, 'no-repeat')!;
-      setFaceTexture(pattern);
-      setHatImg(hat);
-    };
-  }, [canvasRef, faceTextureUrl, hatUrl]);
-
-  // Рендер лица
-  useEffect(() => {
-    const ctx = canvasRef.current?.getContext('2d');
-    if (!ctx || !faceTexture || !hatImg) return;
-
-    renderBasicFace({
-      ctx,
-      eyeScale,
-      mouthScale,
-      color,
-      faceTexture,
-      hatImg,
-    });
-  }, [canvasRef, eyeScale, mouthScale, color, scale, faceTexture, hatImg]);
+    const ctx = canvasRef.current?.getContext('2d')!;
+    renderBasicFace({ ctx, mouthScale, eyeScale, color });
+  }, [canvasRef, volume, eyeScale, mouthScale, color, scale]);
 
   return (
     <canvas

@@ -66,28 +66,11 @@ const drawHatImage = (
   const hatWidth = faceRadius * 1.5;
   const hatHeight = (hatImage.height / hatImage.width) * hatWidth;
   
-  // Позиция - меняй 0.9 чтобы поднять/опустить шапку
+  // Позиция - шапка на голове
   const hatX = centerX - hatWidth / 2;
-  const hatY = centerY - faceRadius * 1.5;
-  
-  // Закругление краев
-  ctx.save();
-  ctx.beginPath();
-  const borderRadius = 15; // ← меняй радиус закругления (больше = круглее)
-  ctx.moveTo(hatX + borderRadius, hatY);
-  ctx.lineTo(hatX + hatWidth - borderRadius, hatY);
-  ctx.quadraticCurveTo(hatX + hatWidth, hatY, hatX + hatWidth, hatY + borderRadius);
-  ctx.lineTo(hatX + hatWidth, hatY + hatHeight - borderRadius);
-  ctx.quadraticCurveTo(hatX + hatWidth, hatY + hatHeight, hatX + hatWidth - borderRadius, hatY + hatHeight);
-  ctx.lineTo(hatX + borderRadius, hatY + hatHeight);
-  ctx.quadraticCurveTo(hatX, hatY + hatHeight, hatX, hatY + hatHeight - borderRadius);
-  ctx.lineTo(hatX, hatY + borderRadius);
-  ctx.quadraticCurveTo(hatX, hatY, hatX + borderRadius, hatY);
-  ctx.closePath();
-  ctx.clip();
+  const hatY = centerY - faceRadius * 0.9;
   
   ctx.drawImage(hatImage, hatX, hatY, hatWidth, hatHeight);
-  ctx.restore();
 };
 
 export function renderBasicFace(props: BasicFaceProps) {
@@ -100,10 +83,7 @@ export function renderBasicFace(props: BasicFaceProps) {
     hatImage,
   } = props;
   const { width, height } = ctx.canvas;
-  
-  // Лицо рисуем на основе ширины, чтобы был круг
   const faceRadius = width / 2 - 20;
-  const faceY = faceRadius + 40; // Лицо в верхней части, оставляем место снизу
   
   // Очистка канваса
   ctx.clearRect(0, 0, width, height);
@@ -117,22 +97,22 @@ export function renderBasicFace(props: BasicFaceProps) {
   // Основной круг лица
   ctx.fillStyle = color || '#f5f5f5';
   ctx.beginPath();
-  ctx.arc(width / 2, faceY, faceRadius, 0, Math.PI * 2);
+  ctx.arc(width / 2, height / 2, faceRadius, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
   
   // Применение пользовательской текстуры
   if (textureImage && textureImage.complete) {
-    applyTexture(ctx, width / 2, faceY, faceRadius, textureImage);
+    applyTexture(ctx, width / 2, height / 2, faceRadius, textureImage);
   }
   
   // Градиентная подсветка для объема
   const gradient = ctx.createRadialGradient(
     width / 2 - faceRadius * 0.3,
-    faceY - faceRadius * 0.3,
+    height / 2 - faceRadius * 0.3,
     0,
     width / 2,
-    faceY,
+    height / 2,
     faceRadius
   );
   gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
@@ -141,11 +121,11 @@ export function renderBasicFace(props: BasicFaceProps) {
   
   ctx.fillStyle = gradient;
   ctx.beginPath();
-  ctx.arc(width / 2, faceY, faceRadius, 0, Math.PI * 2);
+  ctx.arc(width / 2, height / 2, faceRadius, 0, Math.PI * 2);
   ctx.fill();
   
   // Глаза
-  const eyesCenter = [width / 2, faceY / 1.0165];
+  const eyesCenter = [width / 2, height / 2.425];
   const eyesOffset = width / 15;
   const eyeRadius = width / 30;
   const eyesPosition: Array<[number, number]> = [
@@ -167,7 +147,7 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.fill();
   
   // Рот
-  const mouthCenter = [width / 2, faceY * 1.0777];
+  const mouthCenter = [width / 2, (height / 2.875) * 1.55];
   const mouthExtent = [width / 10, (height / 5) * mouthOpenness + 10];
   
   ctx.save();
@@ -182,6 +162,6 @@ export function renderBasicFace(props: BasicFaceProps) {
   
   // Рисуем PNG шапку поверх всего
   if (hatImage && hatImage.complete) {
-    drawHatImage(ctx, width / 2, faceY, faceRadius, hatImage);
+    drawHatImage(ctx, width / 2, height / 2, faceRadius, hatImage);
   }
 }

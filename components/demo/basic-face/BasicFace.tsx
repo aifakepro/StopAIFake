@@ -1,45 +1,45 @@
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
-*/
+ */
 import { RefObject, useEffect, useState, useRef } from 'react';
-
-import { renderBasicFace } from './basic-face-render';
-
+import { renderBasicFace, preloadFaceTexture, preloadHat } from './basic-face-render';
 import useFace from '../../../hooks/demo/use-face';
 import useHover from '../../../hooks/demo/use-hover';
 import useTilt from '../../../hooks/demo/use-tilt';
 import { useLiveAPIContext } from '../../../contexts/LiveAPIContext';
 
-// Minimum volume level that indicates audio output is occurring
+// Thresholds for detecting talking
 const AUDIO_OUTPUT_DETECTION_THRESHOLD = 0.05;
-
-// Amount of delay between end of audio output and setting talking state to false
 const TALKING_STATE_COOLDOWN_MS = 2000;
 
 type BasicFaceProps = {
-  /** The canvas element on which to render the face. */
   canvasRef: RefObject<HTMLCanvasElement | null>;
-  /** The radius of the face. */
   radius?: number;
-  /** The color of the face. */
   color?: string;
+  faceTextureUrl?: string; // путь к текстуре лица (SVG/PNG)
+  hatUrl?: string;         // путь к шапке/колпаку (SVG/PNG)
 };
 
 export default function BasicFace({
   canvasRef,
   radius = 250,
   color,
+  faceTextureUrl,
+  hatUrl,
 }: BasicFaceProps) {
   const timeoutRef = useRef<NodeJS.Timeout>(null);
 
   // Audio output volume
   const { volume } = useLiveAPIContext();
-
-  // Talking state
   const [isTalking, setIsTalking] = useState(false);
 
+  // Scaling
   const [scale, setScale] = useState(0.1);
+
+  // Preloaded images
+  const [faceTexture, setFaceTexture] = useState<CanvasPattern | null>(null);
+  const [hatImg, setHatImg] = useState<HTMLImageElement | null>(null);
 
   // Face state
   const { eyeScale, mouthScale } = useFace();
@@ -50,6 +50,7 @@ export default function BasicFace({
     isActive: isTalking,
   });
 
+  // Handle window resize scaling
   useEffect(() => {
     function calculateScale() {
       setScale(Math.min(window.innerWidth, window.innerHeight) / 1000);
@@ -59,25 +60,42 @@ export default function BasicFace({
     return () => window.removeEventListener('resize', calculateScale);
   }, []);
 
-  // Detect whether the agent is talking based on audio output volume
-  // Set talking state when volume is detected
+  // Detect talking state from volume
   useEffect(() => {
     if (volume > AUDIO_OUTPUT_DETECTION_THRESHOLD) {
       setIsTalking(true);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      // Enforce a slight delay between end of audio output and setting talking state to false
-      timeoutRef.current = setTimeout(
-        () => setIsTalking(false),
-        TALKING_STATE_COOLDOWN_MS
-      );
+      timeoutRef.current = setTimeout(() => setIsTalking(false), TALKING_STATE_COOLDOWN_MS);
     }
   }, [volume]);
 
+  // Preload face texture
+  useEffect(() => {
+    const ctx = canvasRef.current?.getContext('2d');
+    if (!ctx || !faceTextureUrl) return;
+    preloadFaceTexture(faceTextureUrl, ctx).then(setFaceTexture);
+  }, [canvasRef, faceTextureUrl]);
+
+  // Preload hat image
+  useEffect(() => {
+    if (!hatUrl) return;
+    preloadHat(hatUrl).then(setHatImg);
+  }, [hatUrl]);
+
   // Render the face on the canvas
   useEffect(() => {
-    const ctx = canvasRef.current?.getContext('2d')!;
-    renderBasicFace({ ctx, mouthScale, eyeScale, color });
-  }, [canvasRef, volume, eyeScale, mouthScale, color, scale]);
+    const ctx = canvasRef.current?.getContext('2d');
+    if (!ctx) return;
+
+    renderBasicFace({
+      ctx,
+      eyeScale,
+      mouthScale,
+      color,
+      faceTexture: faceTexture || undefined,
+      hatImg: hatImg || undefined,
+    });
+  }, [canvasRef, eyeScale, mouthScale, color, faceTexture, hatImg, scale]);
 
   return (
     <canvas

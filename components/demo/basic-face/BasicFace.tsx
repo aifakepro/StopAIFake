@@ -21,9 +21,9 @@ type BasicFaceProps = {
   radius?: number;
   /** The color of the face. */
   color?: string;
-  /** Path to texture image */
+  /** Path to texture image - default: '/path/to/texture.png' */
   texturePath?: string;
-  /** Path to hat image */
+  /** Path to hat image - default: '/path/to/hat.png' */
   hatPath?: string;
 };
 
@@ -58,18 +58,23 @@ export default function BasicFace({
   
   // Load texture and hat images
   useEffect(() => {
-    if (texturePath) {
+    const TEXTURE_URL = texturePath || 'https://i.ibb.co/TDnPTYzR/gptacp.jpg';
+    const HAT_URL = hatPath || 'https://i.ibb.co/KcRCvND6/Modul.png';
+    
+    if (TEXTURE_URL) {
       const texture = new Image();
-      texture.src = texturePath;
+      texture.crossOrigin = 'anonymous';
+      texture.src = TEXTURE_URL;
       texture.onload = () => setTextureImage(texture);
-      texture.onerror = () => console.error('Failed to load texture image');
+      texture.onerror = () => console.error('Failed to load texture from:', TEXTURE_URL);
     }
     
-    if (hatPath) {
+    if (HAT_URL) {
       const hat = new Image();
-      hat.src = hatPath;
+      hat.crossOrigin = 'anonymous';
+      hat.src = HAT_URL;
       hat.onload = () => setHatImage(hat);
-      hat.onerror = () => console.error('Failed to load hat image');
+      hat.onerror = () => console.error('Failed to load hat from:', HAT_URL);
     }
   }, [texturePath, hatPath]);
   

@@ -70,11 +70,25 @@ export default function BasicFace({
   }, [volume]);
 
   // Preload face texture
-  useEffect(() => {
-    const ctx = canvasRef.current?.getContext('2d');
-    if (!ctx || !faceTextureUrl) return;
-    preloadFaceTexture(faceTextureUrl, ctx).then(setFaceTexture);
-  }, [canvasRef, faceTextureUrl]);
+ useEffect(() => {
+  const ctx = canvasRef.current?.getContext('2d');
+  if (!ctx || !faceTextureUrl || !hatUrl) return;
+
+  const faceImg = new Image();
+  const hatImg = new Image();
+  faceImg.crossOrigin = 'anonymous';
+  hatImg.crossOrigin = 'anonymous';
+  faceImg.src = faceTextureUrl;
+  hatImg.src = hatUrl;
+
+  faceImg.onload = () => {
+    hatImg.onload = () => {
+      const pattern = ctx.createPattern(faceImg, 'no-repeat')!;
+      renderBasicFace({ ctx, eyeScale, mouthScale, color, faceTexture: pattern, hatImg });
+    };
+  };
+}, [canvasRef, eyeScale, mouthScale, color, faceTextureUrl, hatUrl]);
+
 
   // Preload hat image
   useEffect(() => {

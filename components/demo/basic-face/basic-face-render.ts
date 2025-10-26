@@ -62,10 +62,10 @@ const drawHatImage = (
   faceRadius: number,
   hatImage: HTMLImageElement
 ) => {
-  const hatWidth = faceRadius * 1.8;
-  const hatHeight = (hatImage.height / hatImage.width) * hatWidth;
+  const hatWidth = faceRadius * 2.2;
+  const hatHeight = (hatImage.height / hatImage.width) * hatWidth * 1.3;
   const hatX = centerX - hatWidth / 2;
-  const hatY = centerY - faceRadius - hatHeight * 0.6;
+  const hatY = centerY - faceRadius - hatHeight * 0.5;
   
   ctx.drawImage(hatImage, hatX, hatY, hatWidth, hatHeight);
 };

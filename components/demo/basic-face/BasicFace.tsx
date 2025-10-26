@@ -17,8 +17,8 @@ type BasicFaceProps = {
   canvasRef: RefObject<HTMLCanvasElement | null>;
   radius?: number;
   color?: string;
-  faceTextureUrl?: string; // путь к текстуре лица (SVG/PNG)
-  hatUrl?: string;         // путь к шапке/колпаку (SVG/PNG)
+faceTextureUrl="https://i.ibb.co/TDnPTYzR/gptacp.jpg"
+  hatUrl="https://i.ibb.co/qLGqJRVy/nvidia.jpg"
 };
 
 export default function BasicFace({

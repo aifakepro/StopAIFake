@@ -3,13 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { RefObject, useEffect, useState, useRef } from 'react';
-import { renderBasicFace, preloadFaceTexture, preloadHat } from './basic-face-render';
+import { renderBasicFace } from './basic-face-render';
 import useFace from '../../../hooks/demo/use-face';
 import useHover from '../../../hooks/demo/use-hover';
 import useTilt from '../../../hooks/demo/use-tilt';
 import { useLiveAPIContext } from '../../../contexts/LiveAPIContext';
 
-// Thresholds for detecting talking
 const AUDIO_OUTPUT_DETECTION_THRESHOLD = 0.05;
 const TALKING_STATE_COOLDOWN_MS = 2000;
 
@@ -17,8 +16,8 @@ type BasicFaceProps = {
   canvasRef: RefObject<HTMLCanvasElement | null>;
   radius?: number;
   color?: string;
-  faceTextureUrl?: string; // просто указываем, что это string
-  hatUrl?: string;
+  faceTextureUrl?: string; // ссылка на текстуру лица
+  hatUrl?: string;         // ссылка на шапку
 };
 
 export default function BasicFace({
@@ -30,18 +29,11 @@ export default function BasicFace({
 }: BasicFaceProps) {
   const timeoutRef = useRef<NodeJS.Timeout>(null);
 
-  // Audio output volume
   const { volume } = useLiveAPIContext();
   const [isTalking, setIsTalking] = useState(false);
 
-  // Scaling
   const [scale, setScale] = useState(1);
 
-  // Preloaded images
-  const [faceTexture, setFaceTexture] = useState<CanvasPattern | null>(null);
-  const [hatImg, setHatImg] = useState<HTMLImageElement | null>(null);
-
-  // Face state
   const { eyeScale, mouthScale } = useFace();
   const hoverPosition = useHover();
   const tiltAngle = useTilt({
@@ -50,17 +42,34 @@ export default function BasicFace({
     isActive: isTalking,
   });
 
-  // Handle window resize scaling
+  // Загружаем Canvas и изображения
   useEffect(() => {
-    function calculateScale() {
-      setScale(Math.min(window.innerWidth, window.innerHeight) / 1000);
-    }
-    window.addEventListener('resize', calculateScale);
-    calculateScale();
-    return () => window.removeEventListener('resize', calculateScale);
-  }, []);
+    const ctx = canvasRef.current?.getContext('2d');
+    if (!ctx) return;
 
-  // Detect talking state from volume
+    const faceImg = new Image();
+    const hatImg = new Image();
+    faceImg.crossOrigin = 'anonymous';
+    hatImg.crossOrigin = 'anonymous';
+    faceImg.src = faceTextureUrl;
+    hatImg.src = hatUrl;
+
+    faceImg.onload = () => {
+      hatImg.onload = () => {
+        const pattern = ctx.createPattern(faceImg, 'no-repeat')!;
+        renderBasicFace({
+          ctx,
+          eyeScale,
+          mouthScale,
+          color,
+          faceTexture: pattern,
+          hatImg,
+        });
+      };
+    };
+  }, [canvasRef, eyeScale, mouthScale, color, faceTextureUrl, hatUrl]);
+
+  // Определяем talking state по громкости
   useEffect(() => {
     if (volume > AUDIO_OUTPUT_DETECTION_THRESHOLD) {
       setIsTalking(true);
@@ -69,47 +78,15 @@ export default function BasicFace({
     }
   }, [volume]);
 
-  // Preload face texture
- useEffect(() => {
-  const ctx = canvasRef.current?.getContext('2d');
-  if (!ctx || !faceTextureUrl || !hatUrl) return;
-
-  const faceImg = new Image();
-  const hatImg = new Image();
-  faceImg.crossOrigin = 'anonymous';
-  hatImg.crossOrigin = 'anonymous';
-  faceImg.src = faceTextureUrl;
-  hatImg.src = hatUrl;
-
-  faceImg.onload = () => {
-    hatImg.onload = () => {
-      const pattern = ctx.createPattern(faceImg, 'no-repeat')!;
-      renderBasicFace({ ctx, eyeScale, mouthScale, color, faceTexture: pattern, hatImg });
-    };
-  };
-}, [canvasRef, eyeScale, mouthScale, color, faceTextureUrl, hatUrl]);
-
-
-  // Preload hat image
+  // Масштаб под окно
   useEffect(() => {
-    if (!hatUrl) return;
-    preloadHat(hatUrl).then(setHatImg);
-  }, [hatUrl]);
-
-  // Render the face on the canvas
-  useEffect(() => {
-    const ctx = canvasRef.current?.getContext('2d');
-    if (!ctx) return;
-
-    renderBasicFace({
-      ctx,
-      eyeScale,
-      mouthScale,
-      color,
-      faceTexture: faceTexture || undefined,
-      hatImg: hatImg || undefined,
-    });
-  }, [canvasRef, eyeScale, mouthScale, color, faceTexture, hatImg, scale]);
+    function calculateScale() {
+      setScale(Math.min(window.innerWidth, window.innerHeight) / 1000);
+    }
+    window.addEventListener('resize', calculateScale);
+    calculateScale();
+    return () => window.removeEventListener('resize', calculateScale);
+  }, []);
 
   return (
     <canvas

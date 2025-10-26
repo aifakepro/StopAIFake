@@ -62,10 +62,13 @@ const drawHatImage = (
   faceRadius: number,
   hatImage: HTMLImageElement
 ) => {
+  // Размер шапки
   const hatWidth = faceRadius * 2.2;
-  const hatHeight = (hatImage.height / hatImage.width) * hatWidth * 1.3;
+  const hatHeight = (hatImage.height / hatImage.width) * hatWidth;
+  
+  // Позиция - шапка ВЫШЕ головы
   const hatX = centerX - hatWidth / 2;
-  const hatY = centerY - faceRadius - hatHeight * 0.5;
+  const hatY = centerY - faceRadius * 1.4 - hatHeight;
   
   ctx.drawImage(hatImage, hatX, hatY, hatWidth, hatHeight);
 };

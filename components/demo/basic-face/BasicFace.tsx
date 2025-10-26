@@ -35,7 +35,7 @@ export default function BasicFace({
   const [isTalking, setIsTalking] = useState(false);
 
   // Scaling
-  const [scale, setScale] = useState(0.1);
+  const [scale, setScale] = useState(1);
 
   // Preloaded images
   const [faceTexture, setFaceTexture] = useState<CanvasPattern | null>(null);

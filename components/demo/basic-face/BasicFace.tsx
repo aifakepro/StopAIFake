@@ -59,7 +59,7 @@ export default function BasicFace({
   // Load texture and hat images
   useEffect(() => {
     const TEXTURE_URL = texturePath || 'https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=500';
-    const HAT_URL = hatPath || 'https://i.ibb.co/TDnPTYzR/gptacp.jpg';
+    const HAT_URL = hatPath || 'https://cdn-icons-png.flaticon.com/512/2919/2919906.png';
     
     if (TEXTURE_URL) {
       const texture = new Image();
@@ -121,7 +121,7 @@ export default function BasicFace({
       className="basic-face"
       ref={canvasRef}
       width={radius * 2 * scale}
-      height={radius * 2 * scale}
+      height={radius * 2.5 * scale}
       style={{
         display: 'block',
         transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,

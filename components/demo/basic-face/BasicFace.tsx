@@ -121,7 +121,7 @@ export default function BasicFace({
       className="basic-face"
       ref={canvasRef}
       width={radius * 2 * scale}
-      height={radius * 3 * scale}
+      height={radius * 2 * scale}
       style={{
         display: 'block',
         transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,

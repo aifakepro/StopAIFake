@@ -7,8 +7,6 @@ type BasicFaceProps = {
   mouthScale: number;
   eyeScale: number;
   color?: string;
-  textureImage?: HTMLImageElement | null;
-  hatImage?: HTMLImageElement | null;
 };
 
 const eye = (
@@ -26,105 +24,24 @@ const eye = (
   ctx.fill();
 };
 
-// Функция для применения текстуры на круг
-const applyTexture = (
-  ctx: CanvasRenderingContext2D,
-  centerX: number,
-  centerY: number,
-  radius: number,
-  textureImage: HTMLImageElement
-) => {
-  ctx.save();
-  
-  // Создаем маску круга
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-  ctx.clip();
-  
-  // Рисуем текстуру внутри круга
-  const size = radius * 2;
-  ctx.drawImage(
-    textureImage,
-    centerX - radius,
-    centerY - radius,
-    size,
-    size
-  );
-  
-  ctx.restore();
-};
-
-// Функция для рисования PNG шапки
-const drawHatImage = (
-  ctx: CanvasRenderingContext2D,
-  centerX: number,
-  centerY: number,
-  faceRadius: number,
-  hatImage: HTMLImageElement
-) => {
-  // Размер шапки
-  const hatWidth = faceRadius * 1.5;
-  const hatHeight = (hatImage.height / hatImage.width) * hatWidth;
-  
-  // Позиция - шапка на голове
-  const hatX = centerX - hatWidth / 2;
-  const hatY = centerY - faceRadius * 1.5;
-  
-  ctx.drawImage(hatImage, hatX, hatY, hatWidth, hatHeight);
-};
-
 export function renderBasicFace(props: BasicFaceProps) {
   const {
     ctx,
     eyeScale: eyesOpenness,
     mouthScale: mouthOpenness,
     color,
-    textureImage,
-    hatImage,
   } = props;
   const { width, height } = ctx.canvas;
-  const faceRadius = width / 2 - 20;
-  
-  // Очистка канваса
+
+  // Clear the canvas
   ctx.clearRect(0, 0, width, height);
-  
-  // Тень лица
-  ctx.save();
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
-  ctx.shadowBlur = 20;
-  ctx.shadowOffsetY = 10;
-  
-  // Основной круг лица
-  ctx.fillStyle = color || '#f5f5f5';
+
+  // Draw the background circle
+  ctx.fillStyle = color || 'white';
   ctx.beginPath();
-  ctx.arc(width / 2, height / 2, faceRadius, 0, Math.PI * 2);
+  ctx.arc(width / 2, height / 2, width / 2 - 20, 0, Math.PI * 2);
   ctx.fill();
-  ctx.restore();
-  
-  // Применение пользовательской текстуры
-  if (textureImage && textureImage.complete) {
-    applyTexture(ctx, width / 2, height / 2, faceRadius, textureImage);
-  }
-  
-  // Градиентная подсветка для объема
-  const gradient = ctx.createRadialGradient(
-    width / 2 - faceRadius * 0.3,
-    height / 2 - faceRadius * 0.3,
-    0,
-    width / 2,
-    height / 2,
-    faceRadius
-  );
-  gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
-  gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.05)');
-  gradient.addColorStop(1, 'rgba(0, 0, 0, 0.05)');
-  
-  ctx.fillStyle = gradient;
-  ctx.beginPath();
-  ctx.arc(width / 2, height / 2, faceRadius, 0, Math.PI * 2);
-  ctx.fill();
-  
-  // Глаза
+
   const eyesCenter = [width / 2, height / 2.425];
   const eyesOffset = width / 15;
   const eyeRadius = width / 30;
@@ -132,24 +49,16 @@ export function renderBasicFace(props: BasicFaceProps) {
     [eyesCenter[0] - eyesOffset, eyesCenter[1]],
     [eyesCenter[0] + eyesOffset, eyesCenter[1]],
   ];
-  
+
+  // Draw the eyes
   ctx.fillStyle = 'black';
   eye(ctx, eyesPosition[0], eyeRadius, eyesOpenness + 0.1);
   eye(ctx, eyesPosition[1], eyeRadius, eyesOpenness + 0.1);
-  
-  // Блики в глазах
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-  ctx.beginPath();
-  ctx.arc(eyesPosition[0][0] - 3, eyesPosition[0][1] - 3, 3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(eyesPosition[1][0] - 3, eyesPosition[1][1] - 3, 3, 0, Math.PI * 2);
-  ctx.fill();
-  
-  // Рот
+
   const mouthCenter = [width / 2, (height / 2.875) * 1.55];
   const mouthExtent = [width / 10, (height / 5) * mouthOpenness + 10];
-  
+
+  // Draw the mouth
   ctx.save();
   ctx.translate(mouthCenter[0], mouthCenter[1]);
   ctx.scale(1, mouthOpenness + height * 0.002);
@@ -159,9 +68,4 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.ellipse(0, 0, mouthExtent[0], mouthExtent[1] * 0.45, 0, 0, Math.PI, true);
   ctx.fill();
   ctx.restore();
-  
-  // Рисуем PNG шапку поверх всего
-  if (hatImage && hatImage.complete) {
-    drawHatImage(ctx, width / 2, height / 2, faceRadius, hatImage);
-  }
 }

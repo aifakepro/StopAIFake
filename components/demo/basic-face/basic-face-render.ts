@@ -66,11 +66,28 @@ const drawHatImage = (
   const hatWidth = faceRadius * 1.5;
   const hatHeight = (hatImage.height / hatImage.width) * hatWidth;
   
-  // Позиция - шапка на голове
+  // Позиция - меняй 0.9 чтобы поднять/опустить шапку
   const hatX = centerX - hatWidth / 2;
   const hatY = centerY - faceRadius * 0.9;
   
+  // Закругление краев
+  ctx.save();
+  ctx.beginPath();
+  const borderRadius = 15; // ← меняй радиус закругления (больше = круглее)
+  ctx.moveTo(hatX + borderRadius, hatY);
+  ctx.lineTo(hatX + hatWidth - borderRadius, hatY);
+  ctx.quadraticCurveTo(hatX + hatWidth, hatY, hatX + hatWidth, hatY + borderRadius);
+  ctx.lineTo(hatX + hatWidth, hatY + hatHeight - borderRadius);
+  ctx.quadraticCurveTo(hatX + hatWidth, hatY + hatHeight, hatX + hatWidth - borderRadius, hatY + hatHeight);
+  ctx.lineTo(hatX + borderRadius, hatY + hatHeight);
+  ctx.quadraticCurveTo(hatX, hatY + hatHeight, hatX, hatY + hatHeight - borderRadius);
+  ctx.lineTo(hatX, hatY + borderRadius);
+  ctx.quadraticCurveTo(hatX, hatY, hatX + borderRadius, hatY);
+  ctx.closePath();
+  ctx.clip();
+  
   ctx.drawImage(hatImage, hatX, hatY, hatWidth, hatHeight);
+  ctx.restore();
 };
 
 export function renderBasicFace(props: BasicFaceProps) {

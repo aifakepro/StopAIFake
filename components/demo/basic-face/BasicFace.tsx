@@ -17,16 +17,16 @@ type BasicFaceProps = {
   canvasRef: RefObject<HTMLCanvasElement | null>;
   radius?: number;
   color?: string;
-faceTextureUrl="https://i.ibb.co/TDnPTYzR/gptacp.jpg"
-  hatUrl="https://i.ibb.co/qLGqJRVy/nvidia.jpg"
+  faceTextureUrl?: string; // просто указываем, что это string
+  hatUrl?: string;
 };
 
 export default function BasicFace({
   canvasRef,
   radius = 250,
   color,
-  faceTextureUrl,
-  hatUrl,
+  faceTextureUrl = "https://i.ibb.co/TDnPTYzR/gptacp.jpg",
+  hatUrl = "https://i.ibb.co/qLGqJRVy/nvidia.jpg",
 }: BasicFaceProps) {
   const timeoutRef = useRef<NodeJS.Timeout>(null);
 

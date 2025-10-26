@@ -68,7 +68,7 @@ const drawHatImage = (
   
   // Позиция - шапка на голове
   const hatX = centerX - hatWidth / 2;
-  const hatY = centerY - faceRadius * 0.9;
+  const hatY = centerY - faceRadius * 1.5;
   
   ctx.drawImage(hatImage, hatX, hatY, hatWidth, hatHeight);
 };

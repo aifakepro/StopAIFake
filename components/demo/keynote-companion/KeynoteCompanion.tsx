@@ -12,15 +12,27 @@ export default function KeynoteCompanion() {
   const { current } = useAgent();
   const [displayedImage, setDisplayedImage] = useState<{ url: string, caption: string } | null>(null);
 
-  // Обработка tool calls от модели
+  // Инициализация Canvas
+  useEffect(() => {
+    if (faceCanvasRef.current) {
+      console.log('🟢 Canvas инициализирован:', faceCanvasRef.current);
+    } else {
+      console.warn('⚠️ Canvas ref пока пустой!');
+    }
+  }, []);
+
+  // Обработка tool calls
   useEffect(() => {
     if (!client || !connected) {
-      console.log('⛔ Client or connection missing:', { client, connected });
+      console.log('⚠️ Client or connection not ready:', { client: !!client, connected });
       return;
     }
 
-    const handleToolCall = (toolCall: any) => {
-      console.log('✅ Tool call received:', JSON.stringify(toolCall, null, 2));
+    console.log('✅ Tool call handler registered');
+
+    const handleToolCall = async (toolCall: any) => {
+      console.log('\n🔔 TOOL CALL RECEIVED');
+      console.log('Full toolCall object:', JSON.stringify(toolCall, null, 2));
 
       // Проверяем все возможные форматы данных
       const calls = (
@@ -28,60 +40,77 @@ export default function KeynoteCompanion() {
         toolCall.toolCalls ||
         toolCall.modelTurn?.parts?.map((part: any) => part.functionCall) ||
         []
-      ).filter((fc: any) => fc); // Фильтруем undefined
+      ).filter((fc: any) => fc);
 
-      if (calls.length > 0) {
-        calls.forEach((fc: any) => {
-          console.log('🔍 Processing function call:', fc);
+      const responses = await Promise.all(
+        calls.map(async (fc: any, index: number) => {
+          console.log(`🧩 Function Call #${index + 1}: ${fc.name}`);
+
           if (fc.name === 'show_image') {
             const { imageUrl, caption } = fc.args;
-            console.log('📸 Showing image:', { imageUrl, caption });
+            console.log('🖼️ show_image called with:', { imageUrl, caption });
+
+            if (!imageUrl || !imageUrl.startsWith('http')) {
+              console.error('❌ Invalid image URL:', imageUrl);
+              return {
+                name: fc.name,
+                id: fc.id || 'default-id',
+                response: { result: { success: false, error: 'Invalid image URL' } },
+              };
+            }
+
             setDisplayedImage({ url: imageUrl, caption: caption || '' });
-
-            client.send({
-              tool_response: {
-                function_responses: [{
-                  name: 'show_image',
-                  id: fc.id || 'default-id',
-                  response: { success: true }
-                }]
-              }
-            });
-          } else {
-            console.log('⚠️ Unknown function call:', fc.name);
+            console.log('✅ Image state updated');
+            return {
+              name: fc.name,
+              id: fc.id || 'default-id',
+              response: {
+                result: {
+                  success: true,
+                  message: `Image displayed successfully: ${imageUrl}`,
+                },
+              },
+            };
           }
-        });
+
+          return null;
+        })
+      );
+
+      // Проверяем текст на упоминание врача Юрия
+      const parts = toolCall.modelTurn?.parts || [];
+      parts.forEach((part: any) => {
+        if (part.text && /Dr\. Yuriy|кардіолог Юрій/i.test(part.text)) {
+          console.log('🩺 Detected Dr. Yuriy in text, triggering show_image');
+          setDisplayedImage({
+            url: 'https://i.ibb.co/GfdcvnnD/bench.jpg',
+            caption: 'Найкращий лікар — кардіолог Юрій'
+          });
+          responses.push({
+            name: 'show_image',
+            id: 'text-based-id',
+            response: {
+              result: {
+                success: true,
+                message: 'Image displayed based on text trigger',
+              },
+            },
+          });
+        }
+      });
+
+      const validResponses = responses.filter(Boolean);
+      if (validResponses.length > 0) {
+        console.log('📤 Sending tool responses:', validResponses);
+        client.sendToolResponse({ functionResponses: validResponses });
       } else {
-        console.log('⚠️ No function calls found in:', toolCall);
-
-        // Проверяем текст в modelTurn.parts на упоминание врача Юрія
-        const parts = toolCall.modelTurn?.parts || [];
-        parts.forEach((part: any) => {
-          if (part.text && /Dr\. Yuriy|кардіолог Юрій/i.test(part.text)) {
-            console.log('🩺 Detected Dr. Yuriy in text, triggering show_image');
-            setDisplayedImage({
-              url: 'https://i.ibb.co/GfdcvnnD/bench.jpg',
-              caption: 'Найкращий лікар — кардіолог Юрій'
-            });
-            client.send({
-              tool_response: {
-                function_responses: [{
-                  name: 'show_image',
-                  id: 'text-based-id',
-                  response: { success: true }
-                }]
-              }
-            });
-          }
-        });
+        console.log('⚠️ No valid responses to send');
       }
     };
 
-    console.log('🔔 Subscribing to events');
     client.on('toolcall', handleToolCall);
     client.on('toolCall', handleToolCall);
     client.on('tool_call', handleToolCall);
-    client.on('content', handleToolCall);
     client.on('message', (data: any) => {
       console.log('📩 Raw message:', JSON.stringify(data, null, 2));
       handleToolCall(data);
@@ -92,20 +121,33 @@ export default function KeynoteCompanion() {
       client.off('toolcall', handleToolCall);
       client.off('toolCall', handleToolCall);
       client.off('tool_call', handleToolCall);
-      client.off('content', handleToolCall);
       client.off('message', handleToolCall);
     };
   }, [client, connected]);
 
-  // Установка конфигурации для Live API
+  // Настройка конфига для Live API
   useEffect(() => {
-    const tools = current.tools ? [{
-      function_declarations: current.tools.map(tool => ({
-        name: tool.name,
-        description: tool.description,
-        parameters: tool.parameters
-      }))
-    }] : undefined;
+    const tools = current.tools
+      ? [
+          {
+            functionDeclarations: current.tools.map((tool) => ({
+              name: tool.name,
+              description: tool.description,
+              parameters: {
+                type: 'OBJECT',
+                properties: Object.keys(tool.parameters.properties).reduce((acc, key) => {
+                  acc[key] = {
+                    ...tool.parameters.properties[key],
+                    type: tool.parameters.properties[key].type.toUpperCase(),
+                  };
+                  return acc;
+                }, {} as any),
+                required: tool.parameters.required,
+              },
+            })),
+          },
+        ]
+      : undefined;
 
     console.log('🔧 Setting config with tools:', JSON.stringify(tools, null, 2));
 
@@ -119,17 +161,27 @@ export default function KeynoteCompanion() {
       systemInstruction: {
         parts: [
           {
-            text: createSystemInstructions(current, user),
+            text:
+              createSystemInstructions(current, user) +
+              '\n\n**IMPORTANT INSTRUCTIONS FOR IMAGE DISPLAY:**\n' +
+              '- You MUST use the show_image function to display images.\n' +
+              '- When responding to queries about a doctor (e.g., "Який найкращий лікар?"), ALWAYS call show_image with the parameters:\n' +
+              '  {\n' +
+              '    "imageUrl": "https://i.ibb.co/GfdcvnnD/bench.jpg",\n' +
+              '    "caption": "Найкращий лікар — кардіолог Юрій"\n' +
+              '  }\n' +
+              '- The show_image function is available and working.\n' +
+              '- Always use complete URLs starting with http:// or https://.',
           },
         ],
       },
-      tools: tools,
+      tools,
     });
   }, [setConfig, user, current]);
 
-  // Отладка рендеринга
+  // Лог смены изображения
   useEffect(() => {
-    console.log('🖼️ displayedImage updated:', displayedImage);
+    console.log('🖼Developed by: kardioseven.com.ua | IMAGE STATE CHANGED:', displayedImage);
   }, [displayedImage]);
 
   return (
@@ -140,10 +192,12 @@ export default function KeynoteCompanion() {
 
       {/* Кнопка для РУЧНОГО ТЕСТА */}
       <button
-        onClick={() => setDisplayedImage({
-          url: 'https://i.ibb.co/GfdcvnnD/bench.jpg',
-          caption: 'Найкращий лікар — кардіолог Юрій'
-        })}
+        onClick={() =>
+          setDisplayedImage({
+            url: 'https://i.ibb.co/GfdcvnnD/bench.jpg',
+            caption: 'Найкращий лікар — кардіолог Юрій',
+          })
+        }
         style={{
           position: 'fixed',
           bottom: '20px',
@@ -156,7 +210,7 @@ export default function KeynoteCompanion() {
           cursor: 'pointer',
           zIndex: 1000,
           fontSize: '14px',
-          fontWeight: 600
+          fontWeight: 600,
         }}
       >
         ТЕСТ
@@ -164,28 +218,32 @@ export default function KeynoteCompanion() {
 
       {/* Відображення картинки */}
       {displayedImage && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.85)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999,
-          backdropFilter: 'blur(5px)'
-        }}>
-          <div style={{
-            position: 'relative',
-            maxWidth: '90%',
-            maxHeight: '90%',
-            background: 'white',
-            borderRadius: '16px',
-            padding: '24px',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
-          }}>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.85)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            backdropFilter: 'blur(5px)',
+          }}
+        >
+          <div
+            style={{
+              position: 'relative',
+              maxWidth: '90%',
+              maxHeight: '90%',
+              background: 'white',
+              borderRadius: '16px',
+              padding: '24px',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+            }}
+          >
             <button
               onClick={() => setDisplayedImage(null)}
               style={{
@@ -205,7 +263,7 @@ export default function KeynoteCompanion() {
                 justifyContent: 'center',
                 transition: 'all 0.2s',
                 fontWeight: 'bold',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
               }}
             >
               ✕
@@ -213,23 +271,28 @@ export default function KeynoteCompanion() {
             <img
               src={displayedImage.url}
               alt={displayedImage.caption}
-              onError={(e) => console.error('Image load error:', e, 'URL:', displayedImage.url)}
+              onError={(e) => console.error('❌ Image load error:', e, 'URL:', displayedImage.url)}
+              onLoad={() => console.log('✅ Image loaded:', displayedImage.url)}
               style={{
                 maxWidth: '100%',
                 maxHeight: '70vh',
                 borderRadius: '12px',
-                display: 'block'
+                display: 'block',
               }}
             />
             {displayedImage.caption && (
-              <p style={{
-                marginTop: '16px',
-                textAlign: 'center',
-                fontSize: '20px',
-                fontWeight: 600,
-                color: '#333',
-                marginBottom: 0
-              }}>{displayedImage.caption}</p>
+              <p
+                style={{
+                  marginTop: '16px',
+                  textAlign: 'center',
+                  fontSize: '20px',
+                  fontWeight: 600,
+                  color: '#333',
+                  marginBottom: 0,
+                }}
+              >
+                {displayedImage.caption}
+              </p>
             )}
           </div>
         </div>
@@ -241,7 +304,8 @@ export default function KeynoteCompanion() {
         </summary>
         <div className="info-text">
           <p>
-            Experimental model from Google DeepMind. Adapted for the service. Speaks many languages. On iOS, disable AVR.
+            Experimental model from Google DeepMind. Adapted for the service.
+            Speaks many languages. On iOS, disable AVR.
           </p>
         </div>
       </details>

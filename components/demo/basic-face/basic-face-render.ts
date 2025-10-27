@@ -7,8 +7,8 @@ type BasicFaceProps = {
   mouthScale: number;
   eyeScale: number;
   color?: string;
-  textureImage?: HTMLImageElement; // Текстура для круга
-  hatImage?: HTMLImageElement; // Изображение шапки
+  textureImage?: HTMLImageElement;
+  hatImage?: HTMLImageElement;
 };
 
 const eye = (
@@ -51,10 +51,8 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.clip();
   
   if (textureImage && textureImage.complete) {
-    // Рисуем текстуру
     ctx.drawImage(textureImage, 0, 0, width, height);
   } else {
-    // Запасной вариант - обычный цвет
     ctx.fillStyle = color || 'white';
     ctx.fill();
   }
@@ -103,5 +101,4 @@ export function renderBasicFace(props: BasicFaceProps) {
     
     ctx.drawImage(hatImage, hatX, hatY, hatWidth, hatHeight);
   }
-}
 }

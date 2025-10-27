@@ -49,8 +49,8 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 }
 
 // URLs для изображений (замените на свои ссылки)
-const TEXTURE_URL = 'https://i.ibb.co/Z124YfKn/BACKGROUND.png'; // URL текстуры для круга
-const HAT_URL = 'https://i.ibb.co/d4tfjJ1K/kapBot.png'; // URL изображения шапки
+const TEXTURE_URL = 'YOUR_TEXTURE_IMAGE_URL_HERE'; // URL текстуры для круга
+const HAT_URL = 'YOUR_HAT_IMAGE_URL_HERE'; // URL изображения шапки
 
 // Предзагрузка изображений
 loadImage(TEXTURE_URL).catch(() => console.warn('Texture failed to load'));
@@ -92,7 +92,7 @@ export function renderBasicFace(props: BasicFaceProps) {
   }
   
   ctx.fillRect(centerX - faceRadius, centerY - faceRadius, faceRadius * 2, faceRadius * 2);
-  ctx.restore();
+  ctx.restore(); // Важно! Восстанавливаем контекст, убираем clip
   
   // Draw circle outline
   ctx.strokeStyle = color || 'white';
@@ -128,7 +128,7 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.fill();
   ctx.restore();
   
-  // Draw the hat on top
+  // Draw the hat on top (ПОСЛЕ восстановления clip)
   const hatImg = imageCache[HAT_URL];
   if (hatImg) {
     const hatWidth = width * 0.8; // Шапка 80% ширины лица

@@ -12,29 +12,15 @@ export default function KeynoteCompanion() {
   const { current } = useAgent();
   const [displayedImage, setDisplayedImage] = useState<{url: string, caption: string} | null>(null);
 
-  // ТЕСТ - показать изображение сразу для проверки
-  useEffect(() => {
-    // Раскомментируйте эту строку для теста
-    // setDisplayedImage({ url: 'https://i.ibb.co/GfdcvnnD/bench.jpg', caption: 'ТЕСТ' });
-  }, []);
-
   // Обробка tool calls від моделі
   useEffect(() => {
-    if (!client || !connected) {
-      console.log('Client not ready:', { client: !!client, connected });
-      return;
-    }
-
-    console.log('Setting up tool call listener');
+    if (!client || !connected) return;
 
     const handleToolCall = (toolCall: any) => {
-      console.log('=== Tool call received ===', toolCall);
-      console.log('Tool name:', toolCall?.name);
-      console.log('Tool parameters:', toolCall?.parameters);
+      console.log('Tool call received:', toolCall?.name);
       
       if (toolCall.name === 'show_image') {
         const { imageUrl, caption } = toolCall.parameters;
-        console.log('Setting image:', { imageUrl, caption });
         setDisplayedImage({ url: imageUrl, caption: caption || '' });
         
         // Відправляємо відповідь моделі
@@ -43,19 +29,18 @@ export default function KeynoteCompanion() {
             functionResponses: [{
               name: 'show_image',
               id: toolCall.id,
-              response: { success: true, message: 'Зображення показано користувачу' }
+              response: { success: true, message: 'Зображення показано' }
             }]
           });
         }
       }
     };
 
-    // Спробуємо різні варіанти підписки
+    // Підписка на події
     if (client.on) {
       client.on('toolcall', handleToolCall);
       client.on('toolCall', handleToolCall);
       client.on('functioncall', handleToolCall);
-      console.log('Subscribed to tool call events');
     }
 
     return () => {
@@ -67,14 +52,8 @@ export default function KeynoteCompanion() {
     };
   }, [client, connected]);
 
-  // Логируем состояние displayedImage
-  useEffect(() => {
-    console.log('displayedImage state changed:', displayedImage);
-  }, [displayedImage]);
-
   // Set the configuration for the Live API
   useEffect(() => {
-    console.log('Setting config with tools:', current.tools);
     setConfig({
       responseModalities: [Modality.AUDIO],
       speechConfig: {
@@ -93,8 +72,6 @@ export default function KeynoteCompanion() {
     });
   }, [setConfig, user, current]);
 
-  console.log('Render - displayedImage:', displayedImage);
-
   return (
     <>
       <div className="keynote-companion">
@@ -105,7 +82,7 @@ export default function KeynoteCompanion() {
       <button 
         onClick={() => setDisplayedImage({ 
           url: 'https://i.ibb.co/GfdcvnnD/bench.jpg', 
-          caption: 'Тестове зображення' 
+          caption: 'Найкращий лікар — кардіолог Юрій' 
         })}
         style={{
           position: 'fixed',
@@ -117,10 +94,12 @@ export default function KeynoteCompanion() {
           border: 'none',
           borderRadius: '8px',
           cursor: 'pointer',
-          zIndex: 1000
+          zIndex: 1000,
+          fontSize: '14px',
+          fontWeight: 600
         }}
       >
-        ТЕСТ: Показати фото
+        ТЕСТ
       </button>
       
       {/* Відображення картинки */}
@@ -148,10 +127,7 @@ export default function KeynoteCompanion() {
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
           }}>
             <button 
-              onClick={() => {
-                console.log('Closing image');
-                setDisplayedImage(null);
-              }}
+              onClick={() => setDisplayedImage(null)}
               style={{
                 position: 'absolute',
                 top: '-12px',
@@ -177,8 +153,6 @@ export default function KeynoteCompanion() {
             <img 
               src={displayedImage.url} 
               alt={displayedImage.caption}
-              onError={(e) => console.error('Image failed to load:', e)}
-              onLoad={() => console.log('Image loaded successfully')}
               style={{
                 maxWidth: '100%',
                 maxHeight: '70vh',

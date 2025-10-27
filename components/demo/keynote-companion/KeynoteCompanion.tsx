@@ -17,6 +17,7 @@ export default function KeynoteCompanion() {
     if (!client || !connected) return;
 
     const handleToolCall = (toolCall: any) => {
+      console.log('Tool call received:', toolCall); // Для отладки
       if (toolCall.name === 'show_image') {
         const { imageUrl, caption } = toolCall.parameters;
         setDisplayedImage({ url: imageUrl, caption: caption || '' });
@@ -64,78 +65,87 @@ export default function KeynoteCompanion() {
     <>
       <div className="keynote-companion">
         <BasicFace canvasRef={faceCanvasRef!} color={current.bodyColor} />
-        
-        {/* Відображення картинки */}
-        {displayedImage && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.8)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            animation: 'fadeIn 0.3s ease-in-out'
-          }}>
-            <div style={{
-              position: 'relative',
-              maxWidth: '90%',
-              maxHeight: '90%',
-              background: 'white',
-              borderRadius: '12px',
-              padding: '20px',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
-            }}>
-              <img 
-                src={displayedImage.url} 
-                alt={displayedImage.caption}
-                style={{
-                  maxWidth: '100%',
-                  maxHeight: '70vh',
-                  borderRadius: '8px',
-                  display: 'block'
-                }}
-              />
-              {displayedImage.caption && (
-                <p style={{
-                  marginTop: '12px',
-                  textAlign: 'center',
-                  fontSize: '18px',
-                  fontWeight: 600,
-                  color: '#333'
-                }}>{displayedImage.caption}</p>
-              )}
-              <button 
-                onClick={() => setDisplayedImage(null)}
-                style={{
-                  position: 'absolute',
-                  top: '10px',
-                  right: '10px',
-                  background: 'rgba(0, 0, 0, 0.5)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '32px',
-                  height: '32px',
-                  cursor: 'pointer',
-                  fontSize: '20px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'background 0.2s'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(0, 0, 0, 0.7)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(0, 0, 0, 0.5)'}
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-        )}
       </div>
+      
+      {/* Відображення картинки ПОВЕРХ всього */}
+      {displayedImage && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.85)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          backdropFilter: 'blur(5px)'
+        }}>
+          <div style={{
+            position: 'relative',
+            maxWidth: '90%',
+            maxHeight: '90%',
+            background: 'white',
+            borderRadius: '16px',
+            padding: '24px',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
+          }}>
+            <button 
+              onClick={() => setDisplayedImage(null)}
+              style={{
+                position: 'absolute',
+                top: '-12px',
+                right: '-12px',
+                background: '#ff4444',
+                color: 'white',
+                border: 'none',
+                borderRadius: '50%',
+                width: '40px',
+                height: '40px',
+                cursor: 'pointer',
+                fontSize: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s',
+                fontWeight: 'bold',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#cc0000';
+                e.currentTarget.style.transform = 'scale(1.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#ff4444';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+            >
+              ✕
+            </button>
+            <img 
+              src={displayedImage.url} 
+              alt={displayedImage.caption}
+              style={{
+                maxWidth: '100%',
+                maxHeight: '70vh',
+                borderRadius: '12px',
+                display: 'block'
+              }}
+            />
+            {displayedImage.caption && (
+              <p style={{
+                marginTop: '16px',
+                textAlign: 'center',
+                fontSize: '20px',
+                fontWeight: 600,
+                color: '#333',
+                marginBottom: 0
+              }}>{displayedImage.caption}</p>
+            )}
+          </div>
+        </div>
+      )}
       
       <details className="info-overlay">
         <summary className="info-button">

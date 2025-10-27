@@ -111,10 +111,10 @@ export function renderBasicFace(props: BasicFaceProps) {
   const hatImg = imageCache['https://i.ibb.co/d4tfjJ1K/kapBot.png'];
   if (hatImg && hatImg.complete) {
     // Определяем устройство по ширине
-    const isMobile = width < 600;
+    const isMobile = width < 780;
     
     // На мобильных делаем шапку меньше
-    const hatWidthRatio = isMobile ? 0.6 : 0.8;
+    const hatWidthRatio = isMobile ? 0.7 : 0.8;
     const hatWidth = width * hatWidthRatio;
     
     // Рассчитываем высоту с сохранением пропорций

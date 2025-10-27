@@ -3,9 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import { RefObject, useEffect, useState, useRef } from 'react';
-
 import { renderBasicFace } from './basic-face-render';
-
 import useFace from '../../../hooks/demo/use-face';
 import useHover from '../../../hooks/demo/use-hover';
 import useTilt from '../../../hooks/demo/use-tilt';
@@ -13,7 +11,6 @@ import { useLiveAPIContext } from '../../../contexts/LiveAPIContext';
 
 // Minimum volume level that indicates audio output is occurring
 const AUDIO_OUTPUT_DETECTION_THRESHOLD = 0.05;
-
 // Amount of delay between end of audio output and setting talking state to false
 const TALKING_STATE_COOLDOWN_MS = 2000;
 
@@ -32,15 +29,11 @@ export default function BasicFace({
   color,
 }: BasicFaceProps) {
   const timeoutRef = useRef<NodeJS.Timeout>(null);
-
   // Audio output volume
   const { volume } = useLiveAPIContext();
-
   // Talking state
   const [isTalking, setIsTalking] = useState(false);
-
   const [scale, setScale] = useState(0.1);
-
   // Face state
   const { eyeScale, mouthScale } = useFace();
   const hoverPosition = useHover();
@@ -76,18 +69,18 @@ export default function BasicFace({
   // Render the face on the canvas
   useEffect(() => {
     const ctx = canvasRef.current?.getContext('2d')!;
-    renderBasicFace({ ctx, mouthScale, eyeScale, color });
-  }, [canvasRef, volume, eyeScale, mouthScale, color, scale]);
+    renderBasicFace({ ctx, mouthScale, eyeScale, color, radius, scale });
+  }, [canvasRef, volume, eyeScale, mouthScale, color, scale, radius]);
 
   return (
     <canvas
       className="basic-face"
       ref={canvasRef}
       width={radius * 2 * scale}
-      height={radius * 2 * scale}
+      height={radius * 3 * scale}
       style={{
         display: 'block',
-        borderRadius: '50%',
+        borderRadius: '0',
         transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,
       }}
     />

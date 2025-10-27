@@ -12,37 +12,69 @@ export default function KeynoteCompanion() {
   const { current } = useAgent();
   const [displayedImage, setDisplayedImage] = useState<{url: string, caption: string} | null>(null);
 
+  // ТЕСТ - показать изображение сразу для проверки
+  useEffect(() => {
+    // Раскомментируйте эту строку для теста
+    // setDisplayedImage({ url: 'https://i.ibb.co/GfdcvnnD/bench.jpg', caption: 'ТЕСТ' });
+  }, []);
+
   // Обробка tool calls від моделі
   useEffect(() => {
-    if (!client || !connected) return;
+    if (!client || !connected) {
+      console.log('Client not ready:', { client: !!client, connected });
+      return;
+    }
+
+    console.log('Setting up tool call listener');
 
     const handleToolCall = (toolCall: any) => {
-      console.log('Tool call received:', toolCall); // Для отладки
+      console.log('=== Tool call received ===', toolCall);
+      console.log('Tool name:', toolCall?.name);
+      console.log('Tool parameters:', toolCall?.parameters);
+      
       if (toolCall.name === 'show_image') {
         const { imageUrl, caption } = toolCall.parameters;
+        console.log('Setting image:', { imageUrl, caption });
         setDisplayedImage({ url: imageUrl, caption: caption || '' });
         
-        // Відправляємо відповідь моделі, що функція виконана
-        client.sendToolResponse({
-          functionResponses: [{
-            name: 'show_image',
-            id: toolCall.id,
-            response: { success: true, message: 'Зображення показано користувачу' }
-          }]
-        });
+        // Відправляємо відповідь моделі
+        if (client.sendToolResponse) {
+          client.sendToolResponse({
+            functionResponses: [{
+              name: 'show_image',
+              id: toolCall.id,
+              response: { success: true, message: 'Зображення показано користувачу' }
+            }]
+          });
+        }
       }
     };
 
-    // Підписуємось на події tool calls
-    client.on('toolcall', handleToolCall);
+    // Спробуємо різні варіанти підписки
+    if (client.on) {
+      client.on('toolcall', handleToolCall);
+      client.on('toolCall', handleToolCall);
+      client.on('functioncall', handleToolCall);
+      console.log('Subscribed to tool call events');
+    }
 
     return () => {
-      client.off('toolcall', handleToolCall);
+      if (client.off) {
+        client.off('toolcall', handleToolCall);
+        client.off('toolCall', handleToolCall);
+        client.off('functioncall', handleToolCall);
+      }
     };
   }, [client, connected]);
 
+  // Логируем состояние displayedImage
+  useEffect(() => {
+    console.log('displayedImage state changed:', displayedImage);
+  }, [displayedImage]);
+
   // Set the configuration for the Live API
   useEffect(() => {
+    console.log('Setting config with tools:', current.tools);
     setConfig({
       responseModalities: [Modality.AUDIO],
       speechConfig: {
@@ -57,9 +89,11 @@ export default function KeynoteCompanion() {
           },
         ],
       },
-      tools: current.tools || [], // Додаємо tools до конфігурації
+      tools: current.tools || [],
     });
   }, [setConfig, user, current]);
+
+  console.log('Render - displayedImage:', displayedImage);
 
   return (
     <>
@@ -67,7 +101,29 @@ export default function KeynoteCompanion() {
         <BasicFace canvasRef={faceCanvasRef!} color={current.bodyColor} />
       </div>
       
-      {/* Відображення картинки ПОВЕРХ всього */}
+      {/* Кнопка для РУЧНОГО ТЕСТА */}
+      <button 
+        onClick={() => setDisplayedImage({ 
+          url: 'https://i.ibb.co/GfdcvnnD/bench.jpg', 
+          caption: 'Тестове зображення' 
+        })}
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          padding: '10px 20px',
+          background: '#4CAF50',
+          color: 'white',
+          border: 'none',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          zIndex: 1000
+        }}
+      >
+        ТЕСТ: Показати фото
+      </button>
+      
+      {/* Відображення картинки */}
       {displayedImage && (
         <div style={{
           position: 'fixed',
@@ -92,7 +148,10 @@ export default function KeynoteCompanion() {
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
           }}>
             <button 
-              onClick={() => setDisplayedImage(null)}
+              onClick={() => {
+                console.log('Closing image');
+                setDisplayedImage(null);
+              }}
               style={{
                 position: 'absolute',
                 top: '-12px',
@@ -112,20 +171,14 @@ export default function KeynoteCompanion() {
                 fontWeight: 'bold',
                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#cc0000';
-                e.currentTarget.style.transform = 'scale(1.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#ff4444';
-                e.currentTarget.style.transform = 'scale(1)';
-              }}
             >
               ✕
             </button>
             <img 
               src={displayedImage.url} 
               alt={displayedImage.caption}
+              onError={(e) => console.error('Image failed to load:', e)}
+              onLoad={() => console.log('Image loaded successfully')}
               style={{
                 maxWidth: '100%',
                 maxHeight: '70vh',

@@ -114,7 +114,7 @@ export function renderBasicFace(props: BasicFaceProps) {
     const isMobile = width < 780;
     
     // На мобильных делаем шапку меньше
-    const hatWidthRatio = isMobile ? 0.7 : 0.7;
+    const hatWidthRatio = isMobile ? 0.7 : 1.2;
     const hatWidth = width * hatWidthRatio;
     
     // Рассчитываем высоту с сохранением пропорций

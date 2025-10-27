@@ -121,7 +121,7 @@ export function renderBasicFace(props: BasicFaceProps) {
     const hatHeight = (hatImg.height / hatImg.width) * hatWidth;
     
     // Корректируем вертикальный отступ
-    const hatOffsetRatio = isMobile ? 0.15 : 0.2;
+    const hatOffsetRatio = isMobile ? 0.15 : 0.05;
     
     const hatX = centerX - hatWidth / 2;
     const hatY = centerY - faceRadius - hatHeight * hatOffsetRatio;

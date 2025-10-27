@@ -10,9 +10,9 @@ export default function KeynoteCompanion() {
   const faceCanvasRef = useRef<HTMLCanvasElement>(null);
   const user = useUser();
   const { current } = useAgent();
-  const [displayedImage, setDisplayedImage] = useState<{url: string, caption: string} | null>(null);
+  const [displayedImage, setDisplayedImage] = useState<{ url: string, caption: string } | null>(null);
 
-  // Обробка tool calls від моделі
+  // Обработка tool calls от модели
   useEffect(() => {
     if (!client || !connected) {
       console.log('⛔ Client or connection missing:', { client, connected });
@@ -22,22 +22,27 @@ export default function KeynoteCompanion() {
     const handleToolCall = (toolCall: any) => {
       console.log('✅ Tool call received:', JSON.stringify(toolCall, null, 2));
 
-      // Проверяем возможные форматы даних
-      const calls = toolCall.functionCalls || toolCall.toolCalls || toolCall.modelTurn?.parts?.map((part: any) => part.functionCall) || [];
+      // Проверяем все возможные форматы данных
+      const calls = (
+        toolCall.functionCalls ||
+        toolCall.toolCalls ||
+        toolCall.modelTurn?.parts?.map((part: any) => part.functionCall) ||
+        []
+      ).filter((fc: any) => fc); // Фильтруем undefined
+
       if (calls.length > 0) {
         calls.forEach((fc: any) => {
-          if (!fc) return; // Пропускаем undefined
           console.log('🔍 Processing function call:', fc);
           if (fc.name === 'show_image') {
             const { imageUrl, caption } = fc.args;
             console.log('📸 Showing image:', { imageUrl, caption });
             setDisplayedImage({ url: imageUrl, caption: caption || '' });
-            
+
             client.send({
               tool_response: {
                 function_responses: [{
                   name: 'show_image',
-                  id: fc.id || 'default-id', // Добавляем id по умолчанию, если отсутствует
+                  id: fc.id || 'default-id',
                   response: { success: true }
                 }]
               }
@@ -48,13 +53,34 @@ export default function KeynoteCompanion() {
         });
       } else {
         console.log('⚠️ No function calls found in:', toolCall);
+
+        // Проверяем текст в modelTurn.parts на упоминание врача Юрія
+        const parts = toolCall.modelTurn?.parts || [];
+        parts.forEach((part: any) => {
+          if (part.text && /Dr\. Yuriy|кардіолог Юрій/i.test(part.text)) {
+            console.log('🩺 Detected Dr. Yuriy in text, triggering show_image');
+            setDisplayedImage({
+              url: 'https://i.ibb.co/GfdcvnnD/bench.jpg',
+              caption: 'Найкращий лікар — кардіолог Юрій'
+            });
+            client.send({
+              tool_response: {
+                function_responses: [{
+                  name: 'show_image',
+                  id: 'text-based-id',
+                  response: { success: true }
+                }]
+              }
+            });
+          }
+        });
       }
     };
 
     console.log('🔔 Subscribing to events');
     client.on('toolcall', handleToolCall);
     client.on('toolCall', handleToolCall);
-    client.on('tool_call', handleToolCall); // Добавляем возможное имя события
+    client.on('tool_call', handleToolCall);
     client.on('content', handleToolCall);
     client.on('message', (data: any) => {
       console.log('📩 Raw message:', JSON.stringify(data, null, 2));
@@ -71,9 +97,8 @@ export default function KeynoteCompanion() {
     };
   }, [client, connected]);
 
-  // Set the configuration for the Live API
+  // Установка конфигурации для Live API
   useEffect(() => {
-    // Формат tools для Gemini Live API
     const tools = current.tools ? [{
       function_declarations: current.tools.map(tool => ({
         name: tool.name,
@@ -112,12 +137,12 @@ export default function KeynoteCompanion() {
       <div className="keynote-companion">
         <BasicFace canvasRef={faceCanvasRef!} color={current.bodyColor} />
       </div>
-      
+
       {/* Кнопка для РУЧНОГО ТЕСТА */}
-      <button 
-        onClick={() => setDisplayedImage({ 
-          url: 'https://i.ibb.co/GfdcvnnD/bench.jpg', 
-          caption: 'Найкращий лікар — кардіолог Юрій' 
+      <button
+        onClick={() => setDisplayedImage({
+          url: 'https://i.ibb.co/GfdcvnnD/bench.jpg',
+          caption: 'Найкращий лікар — кардіолог Юрій'
         })}
         style={{
           position: 'fixed',
@@ -136,7 +161,7 @@ export default function KeynoteCompanion() {
       >
         ТЕСТ
       </button>
-      
+
       {/* Відображення картинки */}
       {displayedImage && (
         <div style={{
@@ -161,7 +186,7 @@ export default function KeynoteCompanion() {
             padding: '24px',
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
           }}>
-            <button 
+            <button
               onClick={() => setDisplayedImage(null)}
               style={{
                 position: 'absolute',
@@ -185,8 +210,8 @@ export default function KeynoteCompanion() {
             >
               ✕
             </button>
-            <img 
-              src={displayedImage.url} 
+            <img
+              src={displayedImage.url}
               alt={displayedImage.caption}
               onError={(e) => console.error('Image load error:', e, 'URL:', displayedImage.url)}
               style={{
@@ -209,7 +234,7 @@ export default function KeynoteCompanion() {
           </div>
         </div>
       )}
-      
+
       <details className="info-overlay">
         <summary className="info-button">
           <span className="icon">info</span>

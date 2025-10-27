@@ -7,8 +7,26 @@ type BasicFaceProps = {
   mouthScale: number;
   eyeScale: number;
   color?: string;
-  textureImage?: HTMLImageElement | null;
-  hatImage?: HTMLImageElement | null;
+};
+
+// Кэш для загруженных изображений
+const imageCache: { [key: string]: HTMLImageElement } = {};
+
+const loadImage = (url: string): Promise<HTMLImageElement> => {
+  if (imageCache[url]) {
+    return Promise.resolve(imageCache[url]);
+  }
+  
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      imageCache[url] = img;
+      resolve(img);
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
 };
 
 const eye = (
@@ -26,122 +44,42 @@ const eye = (
   ctx.fill();
 };
 
-// Функция для применения текстуры на круг
-const applyTexture = (
-  ctx: CanvasRenderingContext2D,
-  centerX: number,
-  centerY: number,
-  radius: number,
-  textureImage: HTMLImageElement
-) => {
-  ctx.save();
-  
-  // Создаем маску круга
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-  ctx.clip();
-  
-  // Рисуем текстуру внутри круга
-  const size = radius * 2;
-  ctx.drawImage(
-    textureImage,
-    centerX - radius,
-    centerY - radius,
-    size,
-    size
-  );
-  
-  ctx.restore();
-};
-
-// Функция для рисования PNG шапки
-const drawHatImage = (
-  ctx: CanvasRenderingContext2D,
-  centerX: number,
-  centerY: number,
-  faceRadius: number,
-  hatImage: HTMLImageElement
-) => {
-  // Размер шапки
-  const hatWidth = faceRadius * 1.5;
-  const hatHeight = (hatImage.height / hatImage.width) * hatWidth;
-  
-  // Позиция - меняй 0.9 чтобы поднять/опустить шапку
-  const hatX = centerX - hatWidth / 2;
-  const hatY = centerY - faceRadius * 0.9;
-  
-  // Закругление краев
-  ctx.save();
-  ctx.beginPath();
-  const borderRadius = 15; // ← меняй радиус закругления (больше = круглее)
-  ctx.moveTo(hatX + borderRadius, hatY);
-  ctx.lineTo(hatX + hatWidth - borderRadius, hatY);
-  ctx.quadraticCurveTo(hatX + hatWidth, hatY, hatX + hatWidth, hatY + borderRadius);
-  ctx.lineTo(hatX + hatWidth, hatY + hatHeight - borderRadius);
-  ctx.quadraticCurveTo(hatX + hatWidth, hatY + hatHeight, hatX + hatWidth - borderRadius, hatY + hatHeight);
-  ctx.lineTo(hatX + borderRadius, hatY + hatHeight);
-  ctx.quadraticCurveTo(hatX, hatY + hatHeight, hatX, hatY + hatHeight - borderRadius);
-  ctx.lineTo(hatX, hatY + borderRadius);
-  ctx.quadraticCurveTo(hatX, hatY, hatX + borderRadius, hatY);
-  ctx.closePath();
-  ctx.clip();
-  
-  ctx.drawImage(hatImage, hatX, hatY, hatWidth, hatHeight);
-  ctx.restore();
-};
-
 export function renderBasicFace(props: BasicFaceProps) {
   const {
     ctx,
     eyeScale: eyesOpenness,
     mouthScale: mouthOpenness,
     color,
-    textureImage,
-    hatImage,
   } = props;
   const { width, height } = ctx.canvas;
-  const faceRadius = width / 2 - 20;
   
-  // Очистка канваса
+  // Clear the canvas
   ctx.clearRect(0, 0, width, height);
   
-  // Тень лица
+  const faceRadius = width / 2 - 20;
+  const centerX = width / 2;
+  const centerY = height / 2;
+  
+  // Draw the background circle with texture
   ctx.save();
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
-  ctx.shadowBlur = 20;
-  ctx.shadowOffsetY = 10;
-  
-  // Основной круг лица
-  ctx.fillStyle = color || '#f5f5f5';
   ctx.beginPath();
-  ctx.arc(width / 2, height / 2, faceRadius, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
+  ctx.arc(centerX, centerY, faceRadius, 0, Math.PI * 2);
+  ctx.clip();
   
-  // Применение пользовательской текстуры
-  if (textureImage && textureImage.complete) {
-    applyTexture(ctx, width / 2, height / 2, faceRadius, textureImage);
+  // Fill with color first
+  ctx.fillStyle = color || 'white';
+  ctx.fill();
+  
+  // Try to draw texture
+  const textureImg = imageCache['https://i.ibb.co/Q34VxmGm/waves.jpg'];
+  if (textureImg && textureImg.complete) {
+    ctx.globalAlpha = 0.3;
+    ctx.drawImage(textureImg, centerX - faceRadius, centerY - faceRadius, faceRadius * 2, faceRadius * 2);
+    ctx.globalAlpha = 1.0;
   }
   
-  // Градиентная подсветка для объема
-  const gradient = ctx.createRadialGradient(
-    width / 2 - faceRadius * 0.3,
-    height / 2 - faceRadius * 0.3,
-    0,
-    width / 2,
-    height / 2,
-    faceRadius
-  );
-  gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
-  gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.05)');
-  gradient.addColorStop(1, 'rgba(0, 0, 0, 0.05)');
+  ctx.restore();
   
-  ctx.fillStyle = gradient;
-  ctx.beginPath();
-  ctx.arc(width / 2, height / 2, faceRadius, 0, Math.PI * 2);
-  ctx.fill();
-  
-  // Глаза
   const eyesCenter = [width / 2, height / 2.425];
   const eyesOffset = width / 15;
   const eyeRadius = width / 30;
@@ -150,23 +88,15 @@ export function renderBasicFace(props: BasicFaceProps) {
     [eyesCenter[0] + eyesOffset, eyesCenter[1]],
   ];
   
+  // Draw the eyes
   ctx.fillStyle = 'black';
   eye(ctx, eyesPosition[0], eyeRadius, eyesOpenness + 0.1);
   eye(ctx, eyesPosition[1], eyeRadius, eyesOpenness + 0.1);
   
-  // Блики в глазах
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-  ctx.beginPath();
-  ctx.arc(eyesPosition[0][0] - 3, eyesPosition[0][1] - 3, 3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(eyesPosition[1][0] - 3, eyesPosition[1][1] - 3, 3, 0, Math.PI * 2);
-  ctx.fill();
-  
-  // Рот
   const mouthCenter = [width / 2, (height / 2.875) * 1.55];
   const mouthExtent = [width / 10, (height / 5) * mouthOpenness + 10];
   
+  // Draw the mouth
   ctx.save();
   ctx.translate(mouthCenter[0], mouthCenter[1]);
   ctx.scale(1, mouthOpenness + height * 0.002);
@@ -177,8 +107,18 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.fill();
   ctx.restore();
   
-  // Рисуем PNG шапку поверх всего
-  if (hatImage && hatImage.complete) {
-    drawHatImage(ctx, width / 2, height / 2, faceRadius, hatImage);
+  // Draw the hat
+  const hatImg = imageCache['https://i.ibb.co/d4tfjJ1K/kapBot.png'];
+  if (hatImg && hatImg.complete) {
+    const hatWidth = width * 0.8;
+    const hatHeight = (hatImg.height / hatImg.width) * hatWidth;
+    const hatX = centerX - hatWidth / 2;
+    const hatY = centerY - faceRadius - hatHeight * 0.6;
+    
+    ctx.drawImage(hatImg, hatX, hatY, hatWidth, hatHeight);
   }
 }
+
+// Предзагрузка изображений
+loadImage('https://i.ibb.co/Q34VxmGm/waves.jpg').catch(console.error);
+loadImage('https://i.ibb.co/d4tfjJ1K/kapBot.png').catch(console.error);

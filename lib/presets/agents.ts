@@ -58,7 +58,7 @@ export const Paul: Agent = {
   tools: [
     {
       name: 'show_image',
-      description: 'Показує зображення користувачу. Використовуйте цю функцію, коли потрібно показати фото лікаря Юрія або інші медичні зображення.',
+      description: 'Показує зображення користувачу. Використовуйте коли потрібно показати фото лікаря Юрія.',
       parameters: {
         type: 'object',
         properties: {
@@ -71,7 +71,7 @@ export const Paul: Agent = {
             description: 'Підпис до зображення'
           }
         },
-        required: ['imageUrl']
+        required: ['imageUrl', 'caption']
       }
     }
   ]

@@ -1,12 +1,22 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+*/
+import { useEffect, useRef, useState } from 'react';
+import { Modality } from '@google/genai';
+import BasicFace from '../basic-face/BasicFace';
+import { useLiveAPIContext } from '../../../contexts/LiveAPIContext';
+import { createSystemInstructions } from '@/lib/prompts';
+import { useAgent, useUser } from '@/lib/state';
+
 export default function KeynoteCompanion() {
   const { client, connected, setConfig } = useLiveAPIContext();
   const faceCanvasRef = useRef<HTMLCanvasElement>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [imageCaption, setImageCaption] = useState<string>('');
   const user = useUser();
   const { current } = useAgent();
 
-  // Настройка Live API з інструментами
+  // Set the configuration for the Live API
   useEffect(() => {
     setConfig({
       responseModalities: [Modality.AUDIO],
@@ -22,80 +32,78 @@ export default function KeynoteCompanion() {
           },
         ],
       },
-      // Додаємо інструменти, якщо вони є у агента
-      tools: current.tools?.map(tool => ({
-        functionDeclarations: [{
-          name: tool.name,
-          description: tool.description,
-          parameters: tool.parameters
-        }]
-      })) || []
     });
   }, [setConfig, user, current]);
 
-  // ✅ Обробка виклику функції show_image від AI
+  // Показ зображення при питанні про лікаря
   useEffect(() => {
     if (!client) return;
 
-    const handleToolCall = (event: any) => {
-      const functionCalls = event?.data?.toolCall?.functionCalls;
+    const handleMessage = (event: any) => {
+      const text = (event?.serverContent?.modelTurn?.parts?.[0]?.text || '').toLowerCase();
       
-      if (functionCalls) {
-        functionCalls.forEach((call: any) => {
-          if (call.name === 'show_image') {
-            const { imageUrl: url, caption } = call.args;
-            setImageUrl(url || 'https://i.ibb.co/GfdcvnnD/bench.jpg');
-            setImageCaption(caption || '');
-            
-            // Повертаємо результат AI
-            client.sendToolResponse({
-              functionResponses: [{
-                name: 'show_image',
-                response: { success: true, message: 'Зображення показано користувачу' }
-              }]
-            });
-          }
-        });
+      if (text.includes('юрій') || text.includes('лікар')) {
+        setImageUrl('https://i.ibb.co/GfdcvnnD/bench.jpg');
       }
     };
 
-    client.addEventListener('toolcall', handleToolCall);
-    return () => client.removeEventListener('toolcall', handleToolCall);
+    client.addEventListener('message', handleMessage);
+    return () => client.removeEventListener('message', handleMessage);
   }, [client]);
-
+  
   return (
     <>
-      <div className="keynote-companion relative">
+      <div className="keynote-companion">
         <BasicFace canvasRef={faceCanvasRef!} color={current.bodyColor} />
-        
-        {/* 🖼️ Показ зображення */}
-        {imageUrl && (
-          <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-2xl">
-              <img
-                src={imageUrl}
-                alt={imageCaption || 'Рекомендований лікар'}
-                className="rounded-xl max-h-[70vh] w-full object-contain"
-              />
-              {imageCaption && (
-                <p className="mt-4 text-center text-lg font-semibold text-gray-800">
-                  {imageCaption}
-                </p>
-              )}
-              <button
-                className="mt-4 w-full px-4 py-3 rounded-lg bg-red-500 text-white hover:bg-red-600 transition font-medium"
-                onClick={() => {
-                  setImageUrl(null);
-                  setImageCaption('');
-                }}
-              >
-                Закрити
-              </button>
-            </div>
-          </div>
-        )}
       </div>
-      
+
+      {imageUrl && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            padding: '24px',
+            maxWidth: '600px'
+          }}>
+            <img
+              src={imageUrl}
+              alt="Кардіолог Юрій"
+              style={{
+                borderRadius: '12px',
+                maxHeight: '70vh',
+                width: '100%'
+              }}
+            />
+            <button
+              style={{
+                marginTop: '16px',
+                width: '100%',
+                padding: '12px',
+                borderRadius: '8px',
+                backgroundColor: '#ef4444',
+                color: 'white',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+              onClick={() => setImageUrl(null)}
+            >
+              Закрити
+            </button>
+          </div>
+        </div>
+      )}
+
       <details className="info-overlay">
         <summary className="info-button">
           <span className="icon">info</span>

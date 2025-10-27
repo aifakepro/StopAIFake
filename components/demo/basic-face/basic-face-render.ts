@@ -121,7 +121,7 @@ export function renderBasicFace(props: BasicFaceProps) {
       ctx.drawImage(hatImg, hatX, hatY, hatWidth, hatHeight);
     } else {
       // ПК - меняй здесь
-      const hatWidth = width * 1.2;  // <-- ТУТ РАЗМЕР
+      const hatWidth = width * 1.4;  // <-- ТУТ РАЗМЕР
       const hatHeight = (hatImg.height / hatImg.width) * hatWidth;
       const hatX = centerX - hatWidth / 2;
       const hatY = centerY - faceRadius - hatHeight * 0.3;  // <-- ТУТ ОТСТУП

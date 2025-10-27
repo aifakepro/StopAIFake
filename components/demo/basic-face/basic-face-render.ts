@@ -7,8 +7,6 @@ type BasicFaceProps = {
   mouthScale: number;
   eyeScale: number;
   color?: string;
-  radius?: number;
-  scale?: number;
 };
 
 const eye = (
@@ -51,8 +49,8 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 }
 
 // URLs для изображений (замените на свои ссылки)
-const TEXTURE_URL = 'https://i.ibb.co/Z124YfKn/BACKGROUND.png'; // URL текстуры для круга
-const HAT_URL = 'https://i.ibb.co/d4tfjJ1K/kapBot.png'; // URL изображения шапки
+const TEXTURE_URL = 'YOUR_TEXTURE_IMAGE_URL_HERE';
+const HAT_URL = 'https://i.ibb.co/Q34VxmGm/waves.jpg';
 
 // Предзагрузка изображений
 loadImage(TEXTURE_URL).catch(() => console.warn('Texture failed to load'));
@@ -70,41 +68,29 @@ export function renderBasicFace(props: BasicFaceProps) {
   // Clear the canvas
   ctx.clearRect(0, 0, width, height);
   
-  const centerX = width / 2;
-  const faceRadius = width / 2 - 20;
-  // Сдвигаем центр лица вниз, чтобы оставить место для шапки
-  const centerY = height / 2 + faceRadius / 2;
-  
-  // Draw the background circle with texture if available
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, faceRadius, 0, Math.PI * 2);
-  ctx.clip();
-  
+  // Draw the background circle with texture
   const textureImg = imageCache[TEXTURE_URL];
   if (textureImg) {
-    // Рисуем текстуру
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(width / 2, height / 2, width / 2 - 20, 0, Math.PI * 2);
+    ctx.clip();
     const pattern = ctx.createPattern(textureImg, 'repeat');
     if (pattern) {
       ctx.fillStyle = pattern;
     } else {
       ctx.fillStyle = color || 'white';
     }
+    ctx.fillRect(0, 0, width, height);
+    ctx.restore();
   } else {
     ctx.fillStyle = color || 'white';
+    ctx.beginPath();
+    ctx.arc(width / 2, height / 2, width / 2 - 20, 0, Math.PI * 2);
+    ctx.fill();
   }
   
-  ctx.fillRect(centerX - faceRadius, centerY - faceRadius, faceRadius * 2, faceRadius * 2);
-  ctx.restore();
-  
-  // Draw circle outline
-  ctx.strokeStyle = color || 'white';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, faceRadius, 0, Math.PI * 2);
-  ctx.stroke();
-  
-  const eyesCenter = [centerX, centerY - faceRadius / 8];
+  const eyesCenter = [width / 2, height / 2.425];
   const eyesOffset = width / 15;
   const eyeRadius = width / 30;
   const eyesPosition: Array<[number, number]> = [
@@ -117,7 +103,7 @@ export function renderBasicFace(props: BasicFaceProps) {
   eye(ctx, eyesPosition[0], eyeRadius, eyesOpenness + 0.1);
   eye(ctx, eyesPosition[1], eyeRadius, eyesOpenness + 0.1);
   
-  const mouthCenter = [centerX, centerY + faceRadius / 4];
+  const mouthCenter = [width / 2, (height / 2.875) * 1.55];
   const mouthExtent = [width / 10, (height / 5) * mouthOpenness + 10];
   
   // Draw the mouth
@@ -131,14 +117,13 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.fill();
   ctx.restore();
   
-  // Draw the hat on top
+  // Draw the hat
   const hatImg = imageCache[HAT_URL];
   if (hatImg) {
-    const hatWidth = width * 0.8;
+    const hatWidth = width * 0.6;
     const hatHeight = (hatImg.height / hatImg.width) * hatWidth;
-    const hatX = centerX - hatWidth / 2;
-    const hatY = centerY - faceRadius - hatHeight * 0.5;
-    
+    const hatX = width / 2 - hatWidth / 2;
+    const hatY = 0;
     ctx.drawImage(hatImg, hatX, hatY, hatWidth, hatHeight);
   }
 }

@@ -108,25 +108,25 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.restore();
   
   // Draw the hat with adaptive sizing
-  // Draw the hat with adaptive sizing
-const hatImg = imageCache['https://i.ibb.co/mVxKD0T8/kapBot1.png'];
-if (hatImg && hatImg.complete) {
-  const isMobile = width < 780;
-  
-  if (isMobile) {
-    // МОБИЛЬНЫЙ - меняй здесь
-    const hatWidth = width * 0.7;  // <-- ТУТ РАЗМЕР
-    const hatHeight = (hatImg.height / hatImg.width) * hatWidth;
-    const hatX = centerX - hatWidth / 2;
-    const hatY = centerY - faceRadius - hatHeight * 0.15;  // <-- ТУТ ОТСТУП
-    ctx.drawImage(hatImg, hatX, hatY, hatWidth, hatHeight);
-  } else {
-    // ПК - меняй здесь
-    const hatWidth = width * 1.2;  // <-- ТУТ РАЗМЕР
-    const hatHeight = (hatImg.height / hatImg.width) * hatWidth;
-    const hatX = centerX - hatWidth / 2;
-    const hatY = centerY - faceRadius - hatHeight * 0.3;  // <-- ТУТ ОТСТУП
-    ctx.drawImage(hatImg, hatX, hatY, hatWidth, hatHeight);
+  const hatImg = imageCache['https://i.ibb.co/mVxKD0T8/kapBot1.png'];
+  if (hatImg && hatImg.complete) {
+    const isMobile = width < 780;
+    
+    if (isMobile) {
+      // МОБИЛЬНЫЙ - меняй здесь
+      const hatWidth = width * 0.7;  // <-- ТУТ РАЗМЕР
+      const hatHeight = (hatImg.height / hatImg.width) * hatWidth;
+      const hatX = centerX - hatWidth / 2;
+      const hatY = centerY - faceRadius - hatHeight * 0.15;  // <-- ТУТ ОТСТУП
+      ctx.drawImage(hatImg, hatX, hatY, hatWidth, hatHeight);
+    } else {
+      // ПК - меняй здесь
+      const hatWidth = width * 1.2;  // <-- ТУТ РАЗМЕР
+      const hatHeight = (hatImg.height / hatImg.width) * hatWidth;
+      const hatX = centerX - hatWidth / 2;
+      const hatY = centerY - faceRadius - hatHeight * 0.3;  // <-- ТУТ ОТСТУП
+      ctx.drawImage(hatImg, hatX, hatY, hatWidth, hatHeight);
+    }
   }
 }
 

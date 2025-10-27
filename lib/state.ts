@@ -20,7 +20,7 @@ export const useUser = create<
   } & User
 >(set => ({
   name: 'Friend',
-  info: 'is interested in the ethical application of artificial intelligence and wants to learn more.',
+  info: 'is interested in cardiomedicine and wants to learn more about it.',
   setName: name => set({ name }),
   setInfo: info => set({ info }),
 }));

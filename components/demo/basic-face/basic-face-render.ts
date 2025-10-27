@@ -24,35 +24,6 @@ const eye = (
   ctx.fill();
 };
 
-// Кэш для изображений
-const imageCache: { [key: string]: HTMLImageElement | null } = {};
-
-function loadImage(url: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    if (imageCache[url]) {
-      resolve(imageCache[url]!);
-      return;
-    }
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      imageCache[url] = img;
-      resolve(img);
-    };
-    img.onerror = () => {
-      imageCache[url] = null;
-      reject(new Error(`Failed to load image: ${url}`));
-    };
-    img.src = url;
-  });
-}
-
-const TEXTURE_URL = 'https://i.ibb.co/Q34VxmGm/waves.jpg';
-const HAT_URL = 'https://i.ibb.co/d4tfjJ1K/kapBot.png';
-
-loadImage(TEXTURE_URL).catch(() => {});
-loadImage(HAT_URL).catch(() => {});
-
 export function renderBasicFace(props: BasicFaceProps) {
   const {
     ctx,
@@ -66,22 +37,10 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.clearRect(0, 0, width, height);
 
   // Draw the background circle
-  const textureImg = imageCache[TEXTURE_URL];
-  if (textureImg) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(width / 2, height / 2, width / 2 - 20, 0, Math.PI * 2);
-    ctx.clip();
-    const pattern = ctx.createPattern(textureImg, 'repeat');
-    ctx.fillStyle = pattern || color || 'white';
-    ctx.fillRect(0, 0, width, height);
-    ctx.restore();
-  } else {
-    ctx.fillStyle = color || 'white';
-    ctx.beginPath();
-    ctx.arc(width / 2, height / 2, width / 2 - 20, 0, Math.PI * 2);
-    ctx.fill();
-  }
+  ctx.fillStyle = color || 'white';
+  ctx.beginPath();
+  ctx.arc(width / 2, height / 2, width / 2 - 20, 0, Math.PI * 2);
+  ctx.fill();
 
   const eyesCenter = [width / 2, height / 2.425];
   const eyesOffset = width / 15;
@@ -109,12 +68,4 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.ellipse(0, 0, mouthExtent[0], mouthExtent[1] * 0.45, 0, 0, Math.PI, true);
   ctx.fill();
   ctx.restore();
-
-  // Draw hat
-  const hatImg = imageCache[HAT_URL];
-  if (hatImg) {
-    const hatWidth = width * 0.7;
-    const hatHeight = (hatImg.height / hatImg.width) * hatWidth;
-    ctx.drawImage(hatImg, width / 2 - hatWidth / 2, -hatHeight * 0.3, hatWidth, hatHeight);
-  }
 }

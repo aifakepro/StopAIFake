@@ -73,7 +73,7 @@ export function renderBasicFace(props: BasicFaceProps) {
   // Try to draw texture
   const textureImg = imageCache['https://i.ibb.co/7dNm0Ksz/BOTmed1.jpg'];
   if (textureImg && textureImg.complete) {
-    ctx.globalAlpha = 0.3;
+    ctx.globalAlpha = 1.0;
     ctx.drawImage(textureImg, centerX - faceRadius, centerY - faceRadius, faceRadius * 2, faceRadius * 2);
     ctx.globalAlpha = 1.0;
   }

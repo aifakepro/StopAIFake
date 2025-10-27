@@ -71,7 +71,7 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.fill();
   
   // Try to draw texture
-  const textureImg = imageCache['https://i.ibb.co/Q34VxmGm/waves.jpg'];
+  const textureImg = imageCache['https://i.ibb.co/5X2GrC6L/BOTmed.jpg'];
   if (textureImg && textureImg.complete) {
     ctx.globalAlpha = 0.3;
     ctx.drawImage(textureImg, centerX - faceRadius, centerY - faceRadius, faceRadius * 2, faceRadius * 2);
@@ -120,5 +120,5 @@ export function renderBasicFace(props: BasicFaceProps) {
 }
 
 // Предзагрузка изображений
-loadImage('https://i.ibb.co/Q34VxmGm/waves.jpg').catch(console.error);
+loadImage('https://i.ibb.co/5X2GrC6L/BOTmed.jpg').catch(console.error);
 loadImage('https://i.ibb.co/d4tfjJ1K/kapBot.png').catch(console.error);

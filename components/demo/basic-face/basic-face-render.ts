@@ -108,7 +108,7 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.restore();
   
   // Draw the hat with adaptive sizing
-  const hatImg = imageCache['https://i.ibb.co/d4tfjJ1K/kapBot.png'];
+  const hatImg = imageCache['https://i.ibb.co/mVxKD0T8/kapBot1.png'];
   if (hatImg && hatImg.complete) {
     // Определяем устройство по ширине
     const isMobile = width < 780;
@@ -132,4 +132,4 @@ export function renderBasicFace(props: BasicFaceProps) {
 
 // Предзагрузка изображений
 loadImage('https://i.ibb.co/7dNm0Ksz/BOTmed1.jpg').catch(console.error);
-loadImage('https://i.ibb.co/d4tfjJ1K/kapBot.png').catch(console.error);
+loadImage('https://i.ibb.co/mVxKD0T8/kapBot1.png').catch(console.error);

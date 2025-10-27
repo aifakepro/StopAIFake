@@ -107,13 +107,23 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.fill();
   ctx.restore();
   
-  // Draw the hat
+  // Draw the hat with adaptive sizing
   const hatImg = imageCache['https://i.ibb.co/d4tfjJ1K/kapBot.png'];
   if (hatImg && hatImg.complete) {
-    const hatWidth = width * 0.8;
+    // Определяем базовую ширину шапки относительно лица
+    const hatWidthRatio = 0.8;
+    const hatWidth = width * hatWidthRatio;
+    
+    // Рассчитываем высоту с сохранением пропорций
     const hatHeight = (hatImg.height / hatImg.width) * hatWidth;
+    
+    // Адаптивное позиционирование
+    // Для мобильных устройств (меньшая ширина) используем больший отступ
+    const isMobile = width < 600;
+    const hatOffsetRatio = isMobile ? 0.25 : 0.12;
+    
     const hatX = centerX - hatWidth / 2;
-    const hatY = centerY - faceRadius - hatHeight * 0.12;
+    const hatY = centerY - faceRadius - hatHeight * hatOffsetRatio;
     
     ctx.drawImage(hatImg, hatX, hatY, hatWidth, hatHeight);
   }

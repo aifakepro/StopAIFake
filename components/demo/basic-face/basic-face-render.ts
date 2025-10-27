@@ -2,87 +2,143 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import { RefObject, useEffect, useState, useRef } from 'react';
-import { renderBasicFace } from './basic-face-render';
-import useFace from '../../../hooks/demo/use-face';
-import useHover from '../../../hooks/demo/use-hover';
-import useTilt from '../../../hooks/demo/use-tilt';
-import { useLiveAPIContext } from '../../../contexts/LiveAPIContext';
-
-// Minimum volume level that indicates audio output is occurring
-const AUDIO_OUTPUT_DETECTION_THRESHOLD = 0.05;
-// Amount of delay between end of audio output and setting talking state to false
-const TALKING_STATE_COOLDOWN_MS = 2000;
-
 type BasicFaceProps = {
-  /** The canvas element on which to render the face. */
-  canvasRef: RefObject<HTMLCanvasElement | null>;
-  /** The radius of the face. */
-  radius?: number;
-  /** The color of the face. */
+  ctx: CanvasRenderingContext2D;
+  mouthScale: number;
+  eyeScale: number;
   color?: string;
+  radius?: number;
+  scale?: number;
 };
 
-export default function BasicFace({
-  canvasRef,
-  radius = 250,
-  color,
-}: BasicFaceProps) {
-  const timeoutRef = useRef<NodeJS.Timeout>(null);
-  // Audio output volume
-  const { volume } = useLiveAPIContext();
-  // Talking state
-  const [isTalking, setIsTalking] = useState(false);
-  const [scale, setScale] = useState(0.1);
-  // Face state
-  const { eyeScale, mouthScale } = useFace();
-  const hoverPosition = useHover();
-  const tiltAngle = useTilt({
-    maxAngle: 5,
-    speed: 0.075,
-    isActive: isTalking,
+const eye = (
+  ctx: CanvasRenderingContext2D,
+  pos: [number, number],
+  radius: number,
+  scaleY: number
+) => {
+  ctx.save();
+  ctx.translate(pos[0], pos[1]);
+  ctx.scale(1, scaleY);
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, Math.PI * 2);
+  ctx.restore();
+  ctx.fill();
+};
+
+// Кэш для загруженных изображений
+const imageCache: { [key: string]: HTMLImageElement | null } = {};
+
+function loadImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    if (imageCache[url]) {
+      resolve(imageCache[url]!);
+      return;
+    }
+    
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      imageCache[url] = img;
+      resolve(img);
+    };
+    img.onerror = () => {
+      imageCache[url] = null;
+      reject(new Error(`Failed to load image: ${url}`));
+    };
+    img.src = url;
   });
+}
 
-  useEffect(() => {
-    function calculateScale() {
-      setScale(Math.min(window.innerWidth, window.innerHeight) / 1000);
+// URLs для изображений (замените на свои ссылки)
+const TEXTURE_URL = 'https://i.ibb.co/Z124YfKn/BACKGROUND.png'; // URL текстуры для круга
+const HAT_URL = 'https://i.ibb.co/d4tfjJ1K/kapBot.png'; // URL изображения шапки
+
+// Предзагрузка изображений
+loadImage(TEXTURE_URL).catch(() => console.warn('Texture failed to load'));
+loadImage(HAT_URL).catch(() => console.warn('Hat failed to load'));
+
+export function renderBasicFace(props: BasicFaceProps) {
+  const {
+    ctx,
+    eyeScale: eyesOpenness,
+    mouthScale: mouthOpenness,
+    color,
+  } = props;
+  const { width, height } = ctx.canvas;
+  
+  // Clear the canvas
+  ctx.clearRect(0, 0, width, height);
+  
+  const centerX = width / 2;
+  const faceRadius = width / 2 - 20;
+  // Сдвигаем центр лица вниз, чтобы оставить место для шапки
+  const centerY = height / 2 + faceRadius / 2;
+  
+  // Draw the background circle with texture if available
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, faceRadius, 0, Math.PI * 2);
+  ctx.clip();
+  
+  const textureImg = imageCache[TEXTURE_URL];
+  if (textureImg) {
+    // Рисуем текстуру
+    const pattern = ctx.createPattern(textureImg, 'repeat');
+    if (pattern) {
+      ctx.fillStyle = pattern;
+    } else {
+      ctx.fillStyle = color || 'white';
     }
-    window.addEventListener('resize', calculateScale);
-    calculateScale();
-    return () => window.removeEventListener('resize', calculateScale);
-  }, []);
-
-  // Detect whether the agent is talking based on audio output volume
-  // Set talking state when volume is detected
-  useEffect(() => {
-    if (volume > AUDIO_OUTPUT_DETECTION_THRESHOLD) {
-      setIsTalking(true);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      // Enforce a slight delay between end of audio output and setting talking state to false
-      timeoutRef.current = setTimeout(
-        () => setIsTalking(false),
-        TALKING_STATE_COOLDOWN_MS
-      );
-    }
-  }, [volume]);
-
-  // Render the face on the canvas
-  useEffect(() => {
-    const ctx = canvasRef.current?.getContext('2d')!;
-    renderBasicFace({ ctx, mouthScale, eyeScale, color, radius, scale });
-  }, [canvasRef, volume, eyeScale, mouthScale, color, scale, radius]);
-
-  return (
-    <canvas
-      className="basic-face"
-      ref={canvasRef}
-      width={radius * 2 * scale}
-      height={radius * 3 * scale}
-      style={{
-        display: 'block',
-        borderRadius: '0',
-        transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,
-      }}
-    />
-  );
+  } else {
+    ctx.fillStyle = color || 'white';
+  }
+  
+  ctx.fillRect(centerX - faceRadius, centerY - faceRadius, faceRadius * 2, faceRadius * 2);
+  ctx.restore();
+  
+  // Draw circle outline
+  ctx.strokeStyle = color || 'white';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, faceRadius, 0, Math.PI * 2);
+  ctx.stroke();
+  
+  const eyesCenter = [centerX, centerY - faceRadius / 8];
+  const eyesOffset = width / 15;
+  const eyeRadius = width / 30;
+  const eyesPosition: Array<[number, number]> = [
+    [eyesCenter[0] - eyesOffset, eyesCenter[1]],
+    [eyesCenter[0] + eyesOffset, eyesCenter[1]],
+  ];
+  
+  // Draw the eyes
+  ctx.fillStyle = 'black';
+  eye(ctx, eyesPosition[0], eyeRadius, eyesOpenness + 0.1);
+  eye(ctx, eyesPosition[1], eyeRadius, eyesOpenness + 0.1);
+  
+  const mouthCenter = [centerX, centerY + faceRadius / 4];
+  const mouthExtent = [width / 10, (height / 5) * mouthOpenness + 10];
+  
+  // Draw the mouth
+  ctx.save();
+  ctx.translate(mouthCenter[0], mouthCenter[1]);
+  ctx.scale(1, mouthOpenness + height * 0.002);
+  ctx.fillStyle = 'black';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, mouthExtent[0], mouthExtent[1], 0, 0, Math.PI, false);
+  ctx.ellipse(0, 0, mouthExtent[0], mouthExtent[1] * 0.45, 0, 0, Math.PI, true);
+  ctx.fill();
+  ctx.restore();
+  
+  // Draw the hat on top
+  const hatImg = imageCache[HAT_URL];
+  if (hatImg) {
+    const hatWidth = width * 0.8;
+    const hatHeight = (hatImg.height / hatImg.width) * hatWidth;
+    const hatX = centerX - hatWidth / 2;
+    const hatY = centerY - faceRadius - hatHeight * 0.5;
+    
+    ctx.drawImage(hatImg, hatX, hatY, hatWidth, hatHeight);
+  }
 }

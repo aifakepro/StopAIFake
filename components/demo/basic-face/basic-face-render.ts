@@ -2,105 +2,143 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
+import { RefObject, useEffect, useState, useRef } from 'react';
+import { renderBasicFace } from './basic-face-render';
+import useFace from '../../../hooks/demo/use-face';
+import useHover from '../../../hooks/demo/use-hover';
+import useTilt from '../../../hooks/demo/use-tilt';
+import { useLiveAPIContext } from '../../../contexts/LiveAPIContext';
+
+// Minimum volume level that indicates audio output is occurring
+const AUDIO_OUTPUT_DETECTION_THRESHOLD = 0.05;
+// Amount of delay between end of audio output and setting talking state to false
+const TALKING_STATE_COOLDOWN_MS = 2000;
+
 type BasicFaceProps = {
-  ctx: CanvasRenderingContext2D;
-  mouthScale: number;
-  eyeScale: number;
+  /** The canvas element on which to render the face. */
+  canvasRef: RefObject<HTMLCanvasElement | null>;
+  /** The radius of the face. */
+  radius?: number;
+  /** The color of the face. */
   color?: string;
-  textureImage?: HTMLImageElement; // Текстура для круга
-  hatImage?: HTMLImageElement; // Изображение шапки
+  /** URL текстуры для круга (можно использовать прямую ссылку на изображение) */
+  textureUrl?: string;
+  /** URL изображения шапки (можно использовать прямую ссылку на изображение) */
+  hatUrl?: string;
 };
 
-const eye = (
-  ctx: CanvasRenderingContext2D,
-  pos: [number, number],
-  radius: number,
-  scaleY: number
-) => {
-  ctx.save();
-  ctx.translate(pos[0], pos[1]);
-  ctx.scale(1, scaleY);
-  ctx.beginPath();
-  ctx.arc(0, 0, radius, 0, Math.PI * 2);
-  ctx.restore();
-  ctx.fill();
-};
+export default function BasicFace({
+  canvasRef,
+  radius = 250,
+  color,
+  textureUrl = "https://ваша-ссылка-на-текстуру.png", // СЮДА вставьте ссылку на текстуру
+  hatUrl = "https://ваша-ссылка-на-шапку.png", // СЮДА вставьте ссылку на шапку
+}: BasicFaceProps) {
+  const timeoutRef = useRef<NodeJS.Timeout>(null);
+  const textureImageRef = useRef<HTMLImageElement | null>(null);
+  const hatImageRef = useRef<HTMLImageElement | null>(null);
+  
+  // Audio output volume
+  const { volume } = useLiveAPIContext();
+  // Talking state
+  const [isTalking, setIsTalking] = useState(false);
+  const [scale, setScale] = useState(0.1);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  
+  // Face state
+  const { eyeScale, mouthScale } = useFace();
+  const hoverPosition = useHover();
+  const tiltAngle = useTilt({
+    maxAngle: 5,
+    speed: 0.075,
+    isActive: isTalking,
+  });
 
-export function renderBasicFace(props: BasicFaceProps) {
-  const {
-    ctx,
-    eyeScale: eyesOpenness,
-    mouthScale: mouthOpenness,
-    color,
-    textureImage,
-    hatImage,
-  } = props;
-  const { width, height } = ctx.canvas;
-  
-  // Clear the canvas
-  ctx.clearRect(0, 0, width, height);
-  
-  const centerX = width / 2;
-  const centerY = height / 2;
-  const faceRadius = width / 2 - 20;
-  
-  // Draw the background circle
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, faceRadius, 0, Math.PI * 2);
-  ctx.clip();
-  
-  if (textureImage && textureImage.complete) {
-    // Рисуем текстуру
-    ctx.drawImage(textureImage, 0, 0, width, height);
-  } else {
-    // Запасной вариант - обычный цвет
-    ctx.fillStyle = color || 'white';
-    ctx.fill();
-  }
-  ctx.restore();
-  
-  // Draw border
-  ctx.strokeStyle = color || 'white';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, faceRadius, 0, Math.PI * 2);
-  ctx.stroke();
-  
-  const eyesCenter = [centerX, height / 2.425];
-  const eyesOffset = width / 15;
-  const eyeRadius = width / 30;
-  const eyesPosition: Array<[number, number]> = [
-    [eyesCenter[0] - eyesOffset, eyesCenter[1]],
-    [eyesCenter[0] + eyesOffset, eyesCenter[1]],
-  ];
-  
-  // Draw the eyes
-  ctx.fillStyle = 'black';
-  eye(ctx, eyesPosition[0], eyeRadius, eyesOpenness + 0.1);
-  eye(ctx, eyesPosition[1], eyeRadius, eyesOpenness + 0.1);
-  
-  const mouthCenter = [centerX, (height / 2.875) * 1.55];
-  const mouthExtent = [width / 10, (height / 5) * mouthOpenness + 10];
-  
-  // Draw the mouth
-  ctx.save();
-  ctx.translate(mouthCenter[0], mouthCenter[1]);
-  ctx.scale(1, mouthOpenness + height * 0.002);
-  ctx.fillStyle = 'black';
-  ctx.beginPath();
-  ctx.ellipse(0, 0, mouthExtent[0], mouthExtent[1], 0, 0, Math.PI, false);
-  ctx.ellipse(0, 0, mouthExtent[0], mouthExtent[1] * 0.45, 0, 0, Math.PI, true);
-  ctx.fill();
-  ctx.restore();
-  
-  // Draw the hat on top
-  if (hatImage && hatImage.complete) {
-    const hatWidth = width * 0.8; // Ширина шапки
-    const hatHeight = (hatImage.height / hatImage.width) * hatWidth;
-    const hatX = centerX - hatWidth / 2;
-    const hatY = centerY - faceRadius - hatHeight * 0.3; // Позиция над головой
+  // Load images
+  useEffect(() => {
+    let loadedCount = 0;
+    const totalImages = (textureUrl ? 1 : 0) + (hatUrl ? 1 : 0);
     
-    ctx.drawImage(hatImage, hatX, hatY, hatWidth, hatHeight);
-  }
+    if (totalImages === 0) {
+      setImagesLoaded(true);
+      return;
+    }
+    
+    const checkAllLoaded = () => {
+      loadedCount++;
+      if (loadedCount === totalImages) {
+        setImagesLoaded(true);
+      }
+    };
+    
+    if (textureUrl) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = checkAllLoaded;
+      img.onerror = checkAllLoaded;
+      img.src = textureUrl;
+      textureImageRef.current = img;
+    }
+    
+    if (hatUrl) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = checkAllLoaded;
+      img.onerror = checkAllLoaded;
+      img.src = hatUrl;
+      hatImageRef.current = img;
+    }
+  }, [textureUrl, hatUrl]);
+
+  useEffect(() => {
+    function calculateScale() {
+      setScale(Math.min(window.innerWidth, window.innerHeight) / 1000);
+    }
+    window.addEventListener('resize', calculateScale);
+    calculateScale();
+    return () => window.removeEventListener('resize', calculateScale);
+  }, []);
+
+  // Detect whether the agent is talking based on audio output volume
+  // Set talking state when volume is detected
+  useEffect(() => {
+    if (volume > AUDIO_OUTPUT_DETECTION_THRESHOLD) {
+      setIsTalking(true);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      // Enforce a slight delay between end of audio output and setting talking state to false
+      timeoutRef.current = setTimeout(
+        () => setIsTalking(false),
+        TALKING_STATE_COOLDOWN_MS
+      );
+    }
+  }, [volume]);
+
+  // Render the face on the canvas
+  useEffect(() => {
+    if (!imagesLoaded) return;
+    
+    const ctx = canvasRef.current?.getContext('2d')!;
+    renderBasicFace({ 
+      ctx, 
+      mouthScale, 
+      eyeScale, 
+      color,
+      textureImage: textureImageRef.current || undefined,
+      hatImage: hatImageRef.current || undefined,
+    });
+  }, [canvasRef, volume, eyeScale, mouthScale, color, scale, imagesLoaded]);
+
+  return (
+    <canvas
+      className="basic-face"
+      ref={canvasRef}
+      width={radius * 2 * scale}
+      height={radius * 2 * scale}
+      style={{
+        display: 'block',
+        borderRadius: '0%', // Убрали обрезку по кругу, чтобы шапка была видна полностью
+        transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,
+      }}
+    />
+  );
 }

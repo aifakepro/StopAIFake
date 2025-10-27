@@ -110,23 +110,23 @@ export function renderBasicFace(props: BasicFaceProps) {
   // Draw the hat with adaptive sizing
   const hatImg = imageCache['https://i.ibb.co/mVxKD0T8/kapBot1.png'];
   if (hatImg && hatImg.complete) {
+    // Определяем устройство по ширине
     const isMobile = width < 780;
     
-    if (isMobile) {
-      // МОБИЛЬНЫЙ - меняй здесь
-      const hatWidth = width * 0.7;  // <-- ТУТ РАЗМЕР
-      const hatHeight = (hatImg.height / hatImg.width) * hatWidth;
-      const hatX = centerX - hatWidth / 2;
-      const hatY = centerY - faceRadius - hatHeight * 0.15;  // <-- ТУТ ОТСТУП
-      ctx.drawImage(hatImg, hatX, hatY, hatWidth, hatHeight);
-    } else {
-      // ПК - меняй здесь
-      const hatWidth = width * 1.2;  // <-- ТУТ РАЗМЕР
-      const hatHeight = (hatImg.height / hatImg.width) * hatWidth;
-      const hatX = centerX - hatWidth / 2;
-      const hatY = centerY - faceRadius - hatHeight * 0.3;  // <-- ТУТ ОТСТУП
-      ctx.drawImage(hatImg, hatX, hatY, hatWidth, hatHeight);
-    }
+    // На мобильных делаем шапку меньше
+    const hatWidthRatio = isMobile ? 0.7 : 1.2;
+    const hatWidth = width * hatWidthRatio;
+    
+    // Рассчитываем высоту с сохранением пропорций
+    const hatHeight = (hatImg.height / hatImg.width) * hatWidth;
+    
+    // Корректируем вертикальный отступ
+    const hatOffsetRatio = isMobile ? 0.15 : 0.3;
+    
+    const hatX = centerX - hatWidth / 2;
+    const hatY = centerY - faceRadius - hatHeight * hatOffsetRatio;
+    
+    ctx.drawImage(hatImg, hatX, hatY, hatWidth, hatHeight);
   }
 }
 

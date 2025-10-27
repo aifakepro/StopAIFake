@@ -14,42 +14,58 @@ export default function KeynoteCompanion() {
 
   // Обробка tool calls від моделі
   useEffect(() => {
-    if (!client || !connected) return;
+    if (!client || !connected) {
+      console.log('⛔ Client or connection missing:', { client, connected });
+      return;
+    }
 
     const handleToolCall = (toolCall: any) => {
-      console.log('✅ Tool call received:', toolCall);
-      
-      if (toolCall?.functionCalls) {
-        toolCall.functionCalls.forEach((fc: any) => {
+      console.log('✅ Tool call received:', JSON.stringify(toolCall, null, 2));
+
+      // Проверяем возможные форматы даних
+      const calls = toolCall.functionCalls || toolCall.toolCalls || toolCall.modelTurn?.parts?.map((part: any) => part.functionCall) || [];
+      if (calls.length > 0) {
+        calls.forEach((fc: any) => {
+          if (!fc) return; // Пропускаем undefined
+          console.log('🔍 Processing function call:', fc);
           if (fc.name === 'show_image') {
             const { imageUrl, caption } = fc.args;
-            console.log('📸 Showing image:', imageUrl);
+            console.log('📸 Showing image:', { imageUrl, caption });
             setDisplayedImage({ url: imageUrl, caption: caption || '' });
             
-            // Відправляємо відповідь
             client.send({
               tool_response: {
                 function_responses: [{
                   name: 'show_image',
-                  id: fc.id,
+                  id: fc.id || 'default-id', // Добавляем id по умолчанию, если отсутствует
                   response: { success: true }
                 }]
               }
             });
+          } else {
+            console.log('⚠️ Unknown function call:', fc.name);
           }
         });
+      } else {
+        console.log('⚠️ No function calls found in:', toolCall);
       }
     };
 
-    // Підписка на різні типи подій
+    console.log('🔔 Subscribing to events');
     client.on('toolcall', handleToolCall);
     client.on('toolCall', handleToolCall);
+    client.on('tool_call', handleToolCall); // Добавляем возможное имя события
     client.on('content', handleToolCall);
-    client.on('message', handleToolCall);
+    client.on('message', (data: any) => {
+      console.log('📩 Raw message:', JSON.stringify(data, null, 2));
+      handleToolCall(data);
+    });
 
     return () => {
+      console.log('🔔 Unsubscribing from events');
       client.off('toolcall', handleToolCall);
       client.off('toolCall', handleToolCall);
+      client.off('tool_call', handleToolCall);
       client.off('content', handleToolCall);
       client.off('message', handleToolCall);
     };
@@ -66,7 +82,7 @@ export default function KeynoteCompanion() {
       }))
     }] : undefined;
 
-    console.log('🔧 Setting config with tools:', tools);
+    console.log('🔧 Setting config with tools:', JSON.stringify(tools, null, 2));
 
     setConfig({
       responseModalities: [Modality.AUDIO],
@@ -85,6 +101,11 @@ export default function KeynoteCompanion() {
       tools: tools,
     });
   }, [setConfig, user, current]);
+
+  // Отладка рендеринга
+  useEffect(() => {
+    console.log('🖼️ displayedImage updated:', displayedImage);
+  }, [displayedImage]);
 
   return (
     <>
@@ -167,6 +188,7 @@ export default function KeynoteCompanion() {
             <img 
               src={displayedImage.url} 
               alt={displayedImage.caption}
+              onError={(e) => console.error('Image load error:', e, 'URL:', displayedImage.url)}
               style={{
                 maxWidth: '100%',
                 maxHeight: '70vh',

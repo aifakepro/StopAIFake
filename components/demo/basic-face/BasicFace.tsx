@@ -3,9 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import { RefObject, useEffect, useState, useRef } from 'react';
-
 import { renderBasicFace } from './basic-face-render';
-
 import useFace from '../../../hooks/demo/use-face';
 import useHover from '../../../hooks/demo/use-hover';
 import useTilt from '../../../hooks/demo/use-tilt';
@@ -13,7 +11,6 @@ import { useLiveAPIContext } from '../../../contexts/LiveAPIContext';
 
 // Minimum volume level that indicates audio output is occurring
 const AUDIO_OUTPUT_DETECTION_THRESHOLD = 0.05;
-
 // Amount of delay between end of audio output and setting talking state to false
 const TALKING_STATE_COOLDOWN_MS = 2000;
 
@@ -24,23 +21,28 @@ type BasicFaceProps = {
   radius?: number;
   /** The color of the face. */
   color?: string;
+  /** Path to texture image - default: '/path/to/texture.png' */
+  texturePath?: string;
+  /** Path to hat image - default: '/path/to/hat.png' */
+  hatPath?: string;
 };
 
 export default function BasicFace({
   canvasRef,
   radius = 250,
   color,
+  texturePath,
+  hatPath,
 }: BasicFaceProps) {
   const timeoutRef = useRef<NodeJS.Timeout>(null);
-
+  
   // Audio output volume
   const { volume } = useLiveAPIContext();
-
+  
   // Talking state
   const [isTalking, setIsTalking] = useState(false);
-
   const [scale, setScale] = useState(0.1);
-
+  
   // Face state
   const { eyeScale, mouthScale } = useFace();
   const hoverPosition = useHover();
@@ -49,7 +51,33 @@ export default function BasicFace({
     speed: 0.075,
     isActive: isTalking,
   });
-
+  
+  // Image loading
+  const [textureImage, setTextureImage] = useState<HTMLImageElement | null>(null);
+  const [hatImage, setHatImage] = useState<HTMLImageElement | null>(null);
+  
+  // Load texture and hat images
+  useEffect(() => {
+    const TEXTURE_URL = texturePath || 'https://i.ibb.co/Q34VxmGm/waves.jpg';
+    const HAT_URL = hatPath || 'https://i.ibb.co/d4tfjJ1K/kapBot.png';
+    
+    if (TEXTURE_URL) {
+      const texture = new Image();
+      texture.crossOrigin = 'anonymous';
+      texture.src = TEXTURE_URL;
+      texture.onload = () => setTextureImage(texture);
+      texture.onerror = () => console.error('Failed to load texture from:', TEXTURE_URL);
+    }
+    
+    if (HAT_URL) {
+      const hat = new Image();
+      hat.crossOrigin = 'anonymous';
+      hat.src = HAT_URL;
+      hat.onload = () => setHatImage(hat);
+      hat.onerror = () => console.error('Failed to load hat from:', HAT_URL);
+    }
+  }, [texturePath, hatPath]);
+  
   useEffect(() => {
     function calculateScale() {
       setScale(Math.min(window.innerWidth, window.innerHeight) / 1000);
@@ -58,7 +86,7 @@ export default function BasicFace({
     calculateScale();
     return () => window.removeEventListener('resize', calculateScale);
   }, []);
-
+  
   // Detect whether the agent is talking based on audio output volume
   // Set talking state when volume is detected
   useEffect(() => {
@@ -72,13 +100,22 @@ export default function BasicFace({
       );
     }
   }, [volume]);
-
+  
   // Render the face on the canvas
   useEffect(() => {
-    const ctx = canvasRef.current?.getContext('2d')!;
-    renderBasicFace({ ctx, mouthScale, eyeScale, color });
-  }, [canvasRef, volume, eyeScale, mouthScale, color, scale]);
-
+    const ctx = canvasRef.current?.getContext('2d');
+    if (!ctx) return;
+    
+    renderBasicFace({ 
+      ctx, 
+      mouthScale, 
+      eyeScale, 
+      color,
+      textureImage,
+      hatImage
+    });
+  }, [canvasRef, volume, eyeScale, mouthScale, color, scale, textureImage, hatImage]);
+  
   return (
     <canvas
       className="basic-face"
@@ -87,7 +124,6 @@ export default function BasicFace({
       height={radius * 2 * scale}
       style={{
         display: 'block',
-        borderRadius: '50%',
         transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,
       }}
     />

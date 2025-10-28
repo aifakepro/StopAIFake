@@ -30,8 +30,7 @@ function drawHat(ctx: CanvasRenderingContext2D, x: number, y: number, scale: num
   ctx.translate(x, y);
   ctx.scale(scale, scale);
   
-  // Центрируем шляпу (оригинальная ширина примерно 374, высота примерно 152)
-  // Смещаем так, чтобы центр низа шляпы был в точке (0, 0)
+  // Центрируем шляпу
   ctx.translate(-187, -152);
   
   // --- Градиент для основной формы ---
@@ -83,17 +82,13 @@ export function renderBasicFace(props: BasicFaceProps) {
   const { ctx, eyeScale: eyesOpenness, mouthScale: mouthOpenness, color } = props;
   const { width, height } = ctx.canvas;
   
-  // Полный сброс состояния canvas (убираем любые маски)
-  ctx.save();
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.restore();
   ctx.clearRect(0, 0, width, height);
   
   const faceX = width / 2;
   const faceY = height / 2;
   const faceRadius = width / 2 - 20;
 
-  // --- 1. Шляпа (рисуем ДО лица и ДО любых масок)
+  // --- 1. Шляпа (рисуем сначала, чтобы она была позади)
   const hatScale = faceRadius / 200;
   drawHat(ctx, faceX, faceY - faceRadius - 10, hatScale);
 

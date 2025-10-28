@@ -108,27 +108,35 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.restore();
   
   // Draw the hat with adaptive sizing
-  const hatImg = imageCache['https://i.ibb.co/mVxKD0T8/kapBot1.png'];
-  if (hatImg && hatImg.complete) {
-    const isMobile = width < 780;
-    
-    if (isMobile) {
-      // МОБИЛЬНЫЙ - меняй здесь
-      const hatWidth = width * 0.7;  // <-- ТУТ РАЗМЕР
-      const hatHeight = (hatImg.height / hatImg.width) * hatWidth;
-      const hatX = centerX - hatWidth / 2;
-      const hatY = centerY - faceRadius - hatHeight * 0.15;  // <-- ТУТ ОТСТУП
-      ctx.drawImage(hatImg, hatX, hatY, hatWidth, hatHeight);
-    } else {
-      // ПК - меняй здесь
-      const hatWidth = width * 1.4;  // <-- ТУТ РАЗМЕР
-      const hatHeight = (hatImg.height / hatImg.width) * hatWidth;
-      const hatX = centerX - hatWidth / 2;
-      const hatY = centerY - faceRadius - hatHeight * 0.3;  // <-- ТУТ ОТСТУП
-      ctx.drawImage(hatImg, hatX, hatY, hatWidth, hatHeight);
-    }
-  }
-}
+  // Draw the hat (SVG version)
+const svgText = `
+<svg id="Шар_3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 376.78 152.84">
+  <defs>
+    <linearGradient id="Градієнт_без_назви_266" x1="-22.37" y1="132.91" x2="543.7" y2="132.91" gradientUnits="userSpaceOnUse">
+      <stop offset="0.04" stop-color="#5092ff"/>
+      <stop offset="0.53" stop-color="#7ec5ff"/>
+      <stop offset="0.94" stop-color="#457fff"/>
+    </linearGradient>
+  </defs>
+  <path d="M93.67,171.33c-.57-5,5.17-5.67,9.33-18,5.83-17.26-2.1-25.8-2-52.66.06-15.77.1-26.86,7.33-34.67,11-11.84,31.81-9,39.34-8,46.51,5.89,93.79-1,140.66,0,49.61,1.11,99.23,11.56,148.67,7.33,5.42-.46,19.73-1.84,27.33,6.67,8.49,9.49,1.69,23.5.67,51.33-1.21,32.81,7.33,37.64,3.33,48.67-8.77,24.18-82.27,38.53-190,36.67C99.47,205.57,94.86,181.87,93.67,171.33Z" transform="translate(-93.13 -56.49)" style="stroke:#5a90cc;stroke-miterlimit:10;fill:url(#Градієнт_без_назви_266)"/>
+  <rect x="176.28" y="53.51" width="29.59" height="54" rx="8.33" style="fill:#dc5513"/>
+  <rect x="269.81" y="105.6" width="29.59" height="64.79" rx="8.33" transform="translate(53.48 366.11) rotate(-90)" style="fill:#dc5513"/>
+</svg>
+`;
+
+const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+const url = URL.createObjectURL(svgBlob);
+const svgImg = await loadImage(url);
+
+const isMobile = width < 780;
+const hatWidth = isMobile ? width * 0.7 : width * 1.4;
+const hatHeight = hatWidth * (152.84 / 376.78);
+const hatX = centerX - hatWidth / 2;
+const hatY = centerY - faceRadius - hatHeight * (isMobile ? 0.15 : 0.3);
+
+ctx.drawImage(svgImg, hatX, hatY, hatWidth, hatHeight);
+URL.revokeObjectURL(url);
+
 
 // Предзагрузка изображений
 loadImage('https://i.ibb.co/7dNm0Ksz/BOTmed1.jpg').catch(console.error);

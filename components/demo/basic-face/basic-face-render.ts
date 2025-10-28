@@ -51,10 +51,22 @@ export function renderBasicFace(props: BasicFaceProps) {
     mouthScale: mouthOpenness,
     color,
   } = props;
-  const { width, height } = ctx.canvas;
+  
+  // Get actual display size
+  const displayWidth = ctx.canvas.width;
+  const displayHeight = ctx.canvas.height;
+  
+  // Apply pixel ratio scaling
+  const dpr = window.devicePixelRatio || 1;
+  const width = displayWidth / dpr;
+  const height = displayHeight / dpr;
   
   // Clear the canvas
-  ctx.clearRect(0, 0, width, height);
+  ctx.clearRect(0, 0, displayWidth, displayHeight);
+  
+  // Scale context to match device pixel ratio
+  ctx.save();
+  ctx.scale(dpr, dpr);
   
   const faceRadius = width / 2 - 20;
   const centerX = width / 2;
@@ -70,9 +82,11 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.fillStyle = color || 'white';
   ctx.fill();
   
-  // Try to draw texture
+  // Try to draw texture with image smoothing
   const textureImg = imageCache['https://i.ibb.co/7dNm0Ksz/BOTmed1.jpg'];
   if (textureImg && textureImg.complete) {
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     ctx.globalAlpha = 1.0;
     ctx.drawImage(textureImg, centerX - faceRadius, centerY - faceRadius, faceRadius * 2, faceRadius * 2);
     ctx.globalAlpha = 1.0;
@@ -107,9 +121,12 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.fill();
   ctx.restore();
   
-  // Draw the hat with adaptive sizing
+  // Draw the hat with adaptive sizing and high quality
   const hatImg = imageCache['https://i.ibb.co/mVxKD0T8/kapBot1.png'];
   if (hatImg && hatImg.complete) {
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    
     const isMobile = width < 780;
     
     if (isMobile) {
@@ -128,6 +145,8 @@ export function renderBasicFace(props: BasicFaceProps) {
       ctx.drawImage(hatImg, hatX, hatY, hatWidth, hatHeight);
     }
   }
+  
+  ctx.restore(); // Restore scale
 }
 
 // Предзагрузка изображений

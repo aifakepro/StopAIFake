@@ -91,10 +91,9 @@ const hatCanvasSize = canvasSize * hatScale;
   <div
     style={{
       position: 'relative',
-      width: canvasSize,
-      height: canvasSize,
-      transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,
-      margin: '0 auto',
+      display: 'inline-block',
+      transform: 'scale(1.3)', // ← увеличивает всё сразу (лицо + шляпу)
+      transformOrigin: 'center',
     }}
   >
     <canvas
@@ -105,6 +104,7 @@ const hatCanvasSize = canvasSize * hatScale;
       style={{
         display: 'block',
         borderRadius: '50%',
+        transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,
       }}
     />
     <canvas
@@ -114,13 +114,16 @@ const hatCanvasSize = canvasSize * hatScale;
       height={hatCanvasSize}
       style={{
         position: 'absolute',
-        top: -canvasSize * 0.4, // чуть выше головы
+        top: 0,
         left: '50%',
-        transform: `translateX(-50%) scale(${scale})`,
+        marginLeft: -hatCanvasSize / 2,
+        display: 'block',
         pointerEvents: 'none',
+        transform: `translateY(${hoverPosition + 150}px) rotate(${tiltAngle}deg)`,
       }}
     />
   </div>
 );
+
 
 }

@@ -66,7 +66,7 @@ export function renderBasicFace(props: BasicFaceProps) {
  ctx.save();
 const faceRadius = width / 2 - 20;
 const hatScale = (faceRadius * 2) / 500 * 0.9;
-const hatYOffset = -faceRadius * 0.7;
+const hatYOffset = -faceRadius * 0.9;
 
 // сначала перемещаемся, потом масштабируем локально
 ctx.translate(width / 2, height / 2 + hatYOffset);

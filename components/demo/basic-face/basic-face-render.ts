@@ -96,7 +96,7 @@ export function renderBasicFace(props: BasicFaceProps) {
 
   // Настройка смещения шляпы (ручная подгонка)
   const hatOffsetX = -188; // смещение влево/вправо
-  const hatOffsetY = -140; // смещение вверх/вниз
+  const hatOffsetY = -190; // смещение вверх/вниз
   const hatWidth = 376.78;
   const hatHeight = 152.84;
 

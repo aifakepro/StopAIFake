@@ -65,8 +65,8 @@ export function renderBasicFace(props: BasicFaceProps) {
   // === ШЛЯПА ===
   ctx.save();
   const faceRadius = width / 2 - 20;
-  const hatScale = (faceRadius * 2) / 500 * 0.9; // масштаб шляпы
-  const hatYOffset = -faceRadius * 0.7; // сдвиг шляпы вверх/вниз
+  const hatScale = (faceRadius * 2) / 500 * 1.0; // масштаб шляпы
+  const hatYOffset = -faceRadius * 0.9; // сдвиг шляпы вверх/вниз
   ctx.translate(width / 2, height / 2 + hatYOffset);
   ctx.scale(hatScale, hatScale);
   ctx.translate(-376.78 / 2, -152.84 / 2);

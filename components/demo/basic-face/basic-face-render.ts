@@ -81,10 +81,10 @@ export function renderIcon(props: IconProps) {
   const hatTopY = faceCenter[1] - faceRadius;
   
   // Scale the hat based on face size
-  const hatScale = (faceRadius * 2) / 500 * 0.35;
+  const hatScale = (faceRadius * 2) / 500 * 0.7;
   
   ctx.save();
-  ctx.translate(hatCenterX, hatTopY + 40 * hatScale);
+  ctx.translate(hatCenterX, hatTopY + 300 * hatScale);
   ctx.scale(hatScale, hatScale);
   ctx.translate(-376.78 / 2, -152.84 / 2);
   

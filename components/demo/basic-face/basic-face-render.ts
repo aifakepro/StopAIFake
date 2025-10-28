@@ -25,11 +25,16 @@ const eye = (
 };
 
 // --- Функция рисования шляпы через Canvas API ---
+// --- Функция рисования шляпы через Canvas API ---
 function drawHat(ctx: CanvasRenderingContext2D, x: number, y: number, scale: number) {
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(scale, scale);
-
+  
+  // Центрируем шляпу (оригинальная ширина примерно 374, высота примерно 152)
+  // Смещаем так, чтобы центр низа шляпы был в точке (0, 0)
+  ctx.translate(-187, -152);
+  
   // --- Градиент для основной формы ---
   const grad = ctx.createLinearGradient(-115.5, 76.42, 450.57, 76.42);
   grad.addColorStop(0.04, '#5092ff');
@@ -38,7 +43,7 @@ function drawHat(ctx: CanvasRenderingContext2D, x: number, y: number, scale: num
   ctx.fillStyle = grad;
   ctx.strokeStyle = '#5a90cc';
   ctx.lineWidth = 1;
-
+  
   // --- Путь шляпы ---
   ctx.beginPath();
   ctx.moveTo(0.54,114.84);
@@ -56,13 +61,13 @@ function drawHat(ctx: CanvasRenderingContext2D, x: number, y: number, scale: num
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
-
+  
   // --- Первый прямоугольник ---
   ctx.fillStyle = '#dc5513';
   ctx.beginPath();
   ctx.roundRect(176.28, 53.51, 29.59, 54, 8.33);
   ctx.fill();
-
+  
   // --- Второй прямоугольник с трансформацией ---
   ctx.save();
   ctx.translate(109.97, 272.98);
@@ -71,29 +76,28 @@ function drawHat(ctx: CanvasRenderingContext2D, x: number, y: number, scale: num
   ctx.roundRect(176.68, 49.11, 29.59, 64.79, 8.33);
   ctx.fill();
   ctx.restore();
-
+  
   ctx.restore();
 }
 
 export function renderBasicFace(props: BasicFaceProps) {
   const { ctx, eyeScale: eyesOpenness, mouthScale: mouthOpenness, color } = props;
   const { width, height } = ctx.canvas;
-
   ctx.clearRect(0, 0, width, height);
-
   const faceX = width / 2;
   const faceY = height / 2;
   const faceRadius = width / 2 - 20;
 
-  // --- 1. Шляпа (рисуем до лица, чтобы не обрезалась)
-  const hatScale = faceRadius / 80; // подгоняем масштаб шляпы
-  drawHat(ctx, faceX, faceY - faceRadius - 20, hatScale);
-
-  // --- 2. Лицо
+  // --- 1. Лицо
   ctx.fillStyle = color || 'white';
   ctx.beginPath();
   ctx.arc(faceX, faceY, faceRadius, 0, Math.PI * 2);
   ctx.fill();
+
+  // --- 2. Шляпа (рисуем поверх лица, над головой)
+  const hatScale = faceRadius / 200; // уменьшаем масштаб
+  // Позиция: центр головы по X, верх головы по Y минус небольшой отступ
+  drawHat(ctx, faceX, faceY - faceRadius - 10, hatScale);
 
   // --- 3. Глаза
   const eyesCenter = [width / 2, height / 2.425];

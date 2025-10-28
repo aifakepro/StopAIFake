@@ -68,29 +68,31 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.restore();
 }
 export function renderIcon(props: IconProps) {
-  const { ctx, hatYOffset = 187, hatSizeScale = 1 } = props;
+  const { ctx, hatYOffset, hatSizeScale } = props;
   const { width, height } = ctx.canvas;
 
-  // Очистка
+  // Проверяем по самому канвасу, а не по окну
+  const isSmallCanvas = width < 400;
+
+  const finalHatYOffset = hatYOffset ?? (isSmallCanvas ? 187 : 187);
+  const finalHatSizeScale = hatSizeScale ?? (isSmallCanvas ? 1 : 1);
+
   ctx.clearRect(0, 0, width, height);
 
-  // Радиус лица
   const faceRadius = width / 2 - 20;
   const faceCenter = [width / 2, height / 2];
 
-  // Позиция шляпы
   const hatCenterX = faceCenter[0];
   const hatTopY = faceCenter[1] - faceRadius;
 
-  // Масштаб шляпы синхронизирован с размером лица
-  const hatScale = (faceRadius * 2) / 500 * hatSizeScale;
+  // теперь всё зависит только от canvas.width
+  const hatScale = (faceRadius * 2) / 500 * finalHatSizeScale;
 
   ctx.save();
-  ctx.translate(hatCenterX, hatTopY + hatYOffset * hatScale);
+  ctx.translate(hatCenterX, hatTopY + finalHatYOffset * hatScale);
   ctx.scale(hatScale, hatScale);
   ctx.translate(-376.78 / 2, -152.84 / 2);
 
-  // --- рисуем шляпу ---
   const gradient = ctx.createLinearGradient(-115.5, 76.42, 450.57, 76.42);
   gradient.addColorStop(0.04, '#5092ff');
   gradient.addColorStop(0.53, '#7ec5ff');
@@ -104,7 +106,6 @@ export function renderIcon(props: IconProps) {
   ctx.fill(path2D);
   ctx.stroke(path2D);
 
-  // крест
   ctx.fillStyle = '#dc5513';
   ctx.beginPath();
   ctx.roundRect(176.28, 53.51, 29.59, 54, 8.33);

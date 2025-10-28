@@ -1,9 +1,9 @@
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
- */
+*/
 import { RefObject, useEffect, useState, useRef } from 'react';
-import { renderBasicFace } from './basic-face-render';
+import { renderBasicFace, renderHat } from './basic-face-render';
 import useFace from '../../../hooks/demo/use-face';
 import useHover from '../../../hooks/demo/use-hover';
 import useTilt from '../../../hooks/demo/use-tilt';
@@ -29,6 +29,8 @@ export default function BasicFace({
   color,
 }: BasicFaceProps) {
   const timeoutRef = useRef<NodeJS.Timeout>(null);
+  const hatCanvasRef = useRef<HTMLCanvasElement>(null);
+  
   // Audio output volume
   const { volume } = useLiveAPIContext();
   // Talking state
@@ -69,20 +71,57 @@ export default function BasicFace({
   // Render the face on the canvas
   useEffect(() => {
     const ctx = canvasRef.current?.getContext('2d')!;
-    renderBasicFace({ ctx, mouthScale, eyeScale, color });
+    const hatCtx = hatCanvasRef.current?.getContext('2d')!;
+    
+    if (ctx) {
+      renderBasicFace({ ctx, mouthScale, eyeScale, color });
+    }
+    
+    if (hatCtx) {
+      renderHat({ ctx: hatCtx });
+    }
   }, [canvasRef, volume, eyeScale, mouthScale, color, scale]);
 
+  const canvasSize = radius * 2 * scale;
+
   return (
-    <canvas
-      className="basic-face"
-      ref={canvasRef}
-      width={radius * 2 * scale}
-      height={radius * 2 * scale}
+    <div
       style={{
-        display: 'block',
-        // УБРАЛ borderRadius: '50%' - он обрезал шляпу!
+        position: 'relative',
+        width: canvasSize,
+        height: canvasSize,
         transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,
       }}
-    />
+    >
+      {/* Canvas для шляпы - сзади */}
+      <canvas
+        ref={hatCanvasRef}
+        width={canvasSize}
+        height={canvasSize}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          display: 'block',
+          zIndex: 0,
+        }}
+      />
+      
+      {/* Canvas для лица - спереди с круглой маской */}
+      <canvas
+        className="basic-face"
+        ref={canvasRef}
+        width={canvasSize}
+        height={canvasSize}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          display: 'block',
+          borderRadius: '50%',
+          zIndex: 1,
+        }}
+      />
+    </div>
   );
 }

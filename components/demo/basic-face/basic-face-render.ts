@@ -36,13 +36,16 @@ export function renderBasicFace(props: BasicFaceProps) {
     color,
   } = props;
   const { width, height } = ctx.canvas;
-  // Clear the canvas
+
   ctx.clearRect(0, 0, width, height);
-  // Draw the background circle
+
+  // Лицо
   ctx.fillStyle = color || 'white';
   ctx.beginPath();
   ctx.arc(width / 2, height / 2, width / 2 - 20, 0, Math.PI * 2);
   ctx.fill();
+
+  // Глаза
   const eyesCenter = [width / 2, height / 2.425];
   const eyesOffset = width / 15;
   const eyeRadius = width / 30;
@@ -50,13 +53,13 @@ export function renderBasicFace(props: BasicFaceProps) {
     [eyesCenter[0] - eyesOffset, eyesCenter[1]],
     [eyesCenter[0] + eyesOffset, eyesCenter[1]],
   ];
-  // Draw the eyes
   ctx.fillStyle = 'black';
   eye(ctx, eyesPosition[0], eyeRadius, eyesOpenness + 0.1);
   eye(ctx, eyesPosition[1], eyeRadius, eyesOpenness + 0.1);
+
+  // Рот
   const mouthCenter = [width / 2, (height / 2.875) * 1.55];
   const mouthExtent = [width / 10, (height / 5) * mouthOpenness + 10];
-  // Draw the mouth
   ctx.save();
   ctx.translate(mouthCenter[0], mouthCenter[1]);
   ctx.scale(1, mouthOpenness + height * 0.002);
@@ -66,30 +69,14 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.ellipse(0, 0, mouthExtent[0], mouthExtent[1] * 0.45, 0, 0, Math.PI, true);
   ctx.fill();
   ctx.restore();
-}
-export function renderIcon(props: IconProps) {
-  const { ctx, hatYOffset, hatSizeScale } = props;
-  const { width, height } = ctx.canvas;
 
-  // Проверяем по самому канвасу, а не по окну
-  const isSmallCanvas = width < 400;
-
-  const finalHatYOffset = hatYOffset ?? (isSmallCanvas ? 187 : 187);
-  const finalHatSizeScale = hatSizeScale ?? (isSmallCanvas ? 1 : 1);
-
-  ctx.clearRect(0, 0, width, height);
-
+  // === ШЛЯПА ===
   const faceRadius = width / 2 - 20;
-  const faceCenter = [width / 2, height / 2];
-
-  const hatCenterX = faceCenter[0];
-  const hatTopY = faceCenter[1] - faceRadius;
-
-  // теперь всё зависит только от canvas.width
-  const hatScale = (faceRadius * 2) / 500 * finalHatSizeScale;
+  const hatScale = (faceRadius * 2) / 500 * 0.9; // можно подправить
+  const hatYOffset = -faceRadius * 0.9; // подвинь вверх/вниз
 
   ctx.save();
-  ctx.translate(hatCenterX, hatTopY + finalHatYOffset * hatScale);
+  ctx.translate(width / 2, height / 2 + hatYOffset);
   ctx.scale(hatScale, hatScale);
   ctx.translate(-376.78 / 2, -152.84 / 2);
 
@@ -119,5 +106,6 @@ export function renderIcon(props: IconProps) {
   ctx.roundRect(176.68, 49.11, 29.59, 64.79, 8.33);
   ctx.fill();
   ctx.restore();
+
   ctx.restore();
 }

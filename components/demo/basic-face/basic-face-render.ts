@@ -11,7 +11,7 @@ type BasicFaceProps = {
 
 type IconProps = {
   ctx: CanvasRenderingContext2D;
-  color?: string;
+  scale: number;
 };
 
 const eye = (
@@ -85,7 +85,7 @@ export function renderIcon(props: IconProps) {
   
   ctx.save();
   ctx.translate(offsetX, offsetY);
-  ctx.scale(scale * 1.2, scale * 1.2);
+  ctx.scale(scale * 1.3, scale * 1.3);
   ctx.translate(-376.78 / 2, -152.84 / 2);
   
   // Draw the blue hat shape from SVG path

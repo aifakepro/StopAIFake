@@ -71,8 +71,8 @@ export function renderIcon(props: IconProps) {
   const isMobile = window.innerWidth < 768;
   const { 
     ctx, 
-    hatYOffset = isMobile ? 350 : 300, 
-    hatSizeScale = isMobile ? 0.8 : 0.7 
+    hatYOffset = isMobile ? 450 : 400, 
+    hatSizeScale = isMobile ? 1.8 : 1.7 
   } = props;
   const { width, height } = ctx.canvas;
   

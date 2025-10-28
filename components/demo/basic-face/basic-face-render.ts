@@ -9,26 +9,6 @@ type BasicFaceProps = {
   color?: string;
 };
 
-// Кэш для загруженных изображений
-const imageCache: { [key: string]: HTMLImageElement } = {};
-
-const loadImage = (url: string): Promise<HTMLImageElement> => {
-  if (imageCache[url]) {
-    return Promise.resolve(imageCache[url]);
-  }
-  
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      imageCache[url] = img;
-      resolve(img);
-    };
-    img.onerror = reject;
-    img.src = url;
-  });
-};
-
 const eye = (
   ctx: CanvasRenderingContext2D,
   pos: [number, number],
@@ -52,34 +32,16 @@ export function renderBasicFace(props: BasicFaceProps) {
     color,
   } = props;
   const { width, height } = ctx.canvas;
-  
+
   // Clear the canvas
   ctx.clearRect(0, 0, width, height);
-  
-  const faceRadius = width / 2 - 20;
-  const centerX = width / 2;
-  const centerY = height / 2;
-  
-  // Draw the background circle with texture
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, faceRadius, 0, Math.PI * 2);
-  ctx.clip();
-  
-  // Fill with color first
+
+  // Draw the background circle
   ctx.fillStyle = color || 'white';
+  ctx.beginPath();
+  ctx.arc(width / 2, height / 2, width / 2 - 20, 0, Math.PI * 2);
   ctx.fill();
-  
-  // Try to draw texture
-  const textureImg = imageCache['https://i.ibb.co/7dNm0Ksz/BOTmed1.jpg'];
-  if (textureImg && textureImg.complete) {
-    ctx.globalAlpha = 1.0;
-    ctx.drawImage(textureImg, centerX - faceRadius, centerY - faceRadius, faceRadius * 2, faceRadius * 2);
-    ctx.globalAlpha = 1.0;
-  }
-  
-  ctx.restore();
-  
+
   const eyesCenter = [width / 2, height / 2.425];
   const eyesOffset = width / 15;
   const eyeRadius = width / 30;
@@ -87,15 +49,15 @@ export function renderBasicFace(props: BasicFaceProps) {
     [eyesCenter[0] - eyesOffset, eyesCenter[1]],
     [eyesCenter[0] + eyesOffset, eyesCenter[1]],
   ];
-  
+
   // Draw the eyes
   ctx.fillStyle = 'black';
   eye(ctx, eyesPosition[0], eyeRadius, eyesOpenness + 0.1);
   eye(ctx, eyesPosition[1], eyeRadius, eyesOpenness + 0.1);
-  
+
   const mouthCenter = [width / 2, (height / 2.875) * 1.55];
   const mouthExtent = [width / 10, (height / 5) * mouthOpenness + 10];
-  
+
   // Draw the mouth
   ctx.save();
   ctx.translate(mouthCenter[0], mouthCenter[1]);
@@ -106,30 +68,4 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.ellipse(0, 0, mouthExtent[0], mouthExtent[1] * 0.45, 0, 0, Math.PI, true);
   ctx.fill();
   ctx.restore();
-  
-  // Draw the hat with adaptive sizing
-  const hatImg = imageCache['https://i.ibb.co/mVxKD0T8/kapBot1.png'];
-  if (hatImg && hatImg.complete) {
-    const isMobile = width < 780;
-    
-    if (isMobile) {
-      // МОБИЛЬНЫЙ - меняй здесь
-      const hatWidth = width * 0.7;  // <-- ТУТ РАЗМЕР
-      const hatHeight = (hatImg.height / hatImg.width) * hatWidth;
-      const hatX = centerX - hatWidth / 2;
-      const hatY = centerY - faceRadius - hatHeight * 0.15;  // <-- ТУТ ОТСТУП
-      ctx.drawImage(hatImg, hatX, hatY, hatWidth, hatHeight);
-    } else {
-      // ПК - меняй здесь
-      const hatWidth = width * 1.4;  // <-- ТУТ РАЗМЕР
-      const hatHeight = (hatImg.height / hatImg.width) * hatWidth;
-      const hatX = centerX - hatWidth / 2;
-      const hatY = centerY - faceRadius - hatHeight * 0.3;  // <-- ТУТ ОТСТУП
-      ctx.drawImage(hatImg, hatX, hatY, hatWidth, hatHeight);
-    }
-  }
 }
-
-// Предзагрузка изображений
-loadImage('https://i.ibb.co/7dNm0Ksz/BOTmed1.jpg').catch(console.error);
-loadImage('https://i.ibb.co/mVxKD0T8/kapBot1.png').catch(console.error);

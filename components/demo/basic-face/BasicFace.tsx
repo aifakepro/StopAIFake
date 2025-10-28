@@ -1,11 +1,9 @@
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
-*/
+ */
 import { RefObject, useEffect, useState, useRef } from 'react';
-
 import { renderBasicFace } from './basic-face-render';
-
 import useFace from '../../../hooks/demo/use-face';
 import useHover from '../../../hooks/demo/use-hover';
 import useTilt from '../../../hooks/demo/use-tilt';
@@ -13,7 +11,6 @@ import { useLiveAPIContext } from '../../../contexts/LiveAPIContext';
 
 // Minimum volume level that indicates audio output is occurring
 const AUDIO_OUTPUT_DETECTION_THRESHOLD = 0.05;
-
 // Amount of delay between end of audio output and setting talking state to false
 const TALKING_STATE_COOLDOWN_MS = 2000;
 
@@ -32,15 +29,11 @@ export default function BasicFace({
   color,
 }: BasicFaceProps) {
   const timeoutRef = useRef<NodeJS.Timeout>(null);
-
   // Audio output volume
   const { volume } = useLiveAPIContext();
-
   // Talking state
   const [isTalking, setIsTalking] = useState(false);
-
   const [scale, setScale] = useState(0.1);
-
   // Face state
   const { eyeScale, mouthScale } = useFace();
   const hoverPosition = useHover();
@@ -87,7 +80,7 @@ export default function BasicFace({
       height={radius * 2 * scale}
       style={{
         display: 'block',
-        borderRadius: '50%',
+        // УБРАЛ borderRadius: '50%' - он обрезал шляпу!
         transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,
       }}
     />

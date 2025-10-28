@@ -43,7 +43,7 @@ export function renderBasicFace(props: BasicFaceProps) {
   // === ШЛЯПА (встроенный SVG) ===
   ctx.save();
   // подгони позицию шляпы относительно круга
-  ctx.translate(faceX - 188, faceY - faceRadius - 120);
+  ctx.translate(faceX - 188, faceY - faceRadius - 180);
   ctx.scale(1, 1); // можешь подстроить вручную
 
   // путь из твоего SVG

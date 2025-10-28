@@ -9,6 +9,10 @@ type BasicFaceProps = {
   color?: string;
 };
 
+type HatProps = {
+  ctx: CanvasRenderingContext2D;
+};
+
 const eye = (
   ctx: CanvasRenderingContext2D,
   pos: [number, number],
@@ -78,6 +82,21 @@ function drawHat(ctx: CanvasRenderingContext2D, x: number, y: number, scale: num
   ctx.restore();
 }
 
+// --- Экспортируемая функция для рендера шляпы ---
+export function renderHat(props: HatProps) {
+  const { ctx } = props;
+  const { width, height } = ctx.canvas;
+  
+  ctx.clearRect(0, 0, width, height);
+  
+  const faceX = width / 2;
+  const faceY = height / 2;
+  const faceRadius = width / 2 - 20;
+  
+  const hatScale = faceRadius / 200;
+  drawHat(ctx, faceX, faceY - faceRadius - 10, hatScale);
+}
+
 export function renderBasicFace(props: BasicFaceProps) {
   const { ctx, eyeScale: eyesOpenness, mouthScale: mouthOpenness, color } = props;
   const { width, height } = ctx.canvas;
@@ -88,17 +107,13 @@ export function renderBasicFace(props: BasicFaceProps) {
   const faceY = height / 2;
   const faceRadius = width / 2 - 20;
 
-  // --- 1. Шляпа (рисуем сначала, чтобы она была позади)
-  const hatScale = faceRadius / 200;
-  drawHat(ctx, faceX, faceY - faceRadius - 10, hatScale);
-
-  // --- 2. Лицо
+  // --- 1. Лицо
   ctx.fillStyle = color || 'white';
   ctx.beginPath();
   ctx.arc(faceX, faceY, faceRadius, 0, Math.PI * 2);
   ctx.fill();
 
-  // --- 3. Глаза
+  // --- 2. Глаза
   const eyesCenter = [width / 2, height / 2.425];
   const eyesOffset = width / 15;
   const eyeRadius = width / 30;
@@ -110,7 +125,7 @@ export function renderBasicFace(props: BasicFaceProps) {
   eye(ctx, eyesPosition[0], eyeRadius, eyesOpenness + 0.1);
   eye(ctx, eyesPosition[1], eyeRadius, eyesOpenness + 0.1);
 
-  // --- 4. Рот
+  // --- 3. Рот
   const mouthCenter = [width / 2, (height / 2.875) * 1.55];
   const mouthExtent = [width / 10, (height / 5) * mouthOpenness + 10];
   ctx.save();

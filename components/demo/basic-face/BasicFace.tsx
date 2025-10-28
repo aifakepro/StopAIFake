@@ -9,17 +9,12 @@ import useHover from '../../../hooks/demo/use-hover';
 import useTilt from '../../../hooks/demo/use-tilt';
 import { useLiveAPIContext } from '../../../contexts/LiveAPIContext';
 
-// Minimum volume level that indicates audio output is occurring
 const AUDIO_OUTPUT_DETECTION_THRESHOLD = 0.05;
-// Amount of delay between end of audio output and setting talking state to false
 const TALKING_STATE_COOLDOWN_MS = 2000;
 
 type BasicFaceProps = {
-  /** The canvas element on which to render the face. */
   canvasRef: RefObject<HTMLCanvasElement | null>;
-  /** The radius of the face. */
   radius?: number;
-  /** The color of the face. */
   color?: string;
 };
 
@@ -29,14 +24,12 @@ export default function BasicFace({
   color,
 }: BasicFaceProps) {
   const timeoutRef = useRef<NodeJS.Timeout>(null);
-  const iconCanvasRef = useRef<HTMLCanvasElement>(null);
-  
-  // Audio output volume
+  const hatCanvasRef = useRef<HTMLCanvasElement>(null);
+
   const { volume } = useLiveAPIContext();
-  // Talking state
   const [isTalking, setIsTalking] = useState(false);
   const [scale, setScale] = useState(0.1);
-  // Face state
+
   const { eyeScale, mouthScale } = useFace();
   const hoverPosition = useHover();
   const tiltAngle = useTilt({
@@ -45,6 +38,7 @@ export default function BasicFace({
     isActive: isTalking,
   });
 
+  // вычисляем общий масштаб
   useEffect(() => {
     function calculateScale() {
       setScale(Math.min(window.innerWidth, window.innerHeight) / 1000);
@@ -54,13 +48,11 @@ export default function BasicFace({
     return () => window.removeEventListener('resize', calculateScale);
   }, []);
 
-  // Detect whether the agent is talking based on audio output volume
-  // Set talking state when volume is detected
+  // определяем, "говорит" ли агент
   useEffect(() => {
     if (volume > AUDIO_OUTPUT_DETECTION_THRESHOLD) {
       setIsTalking(true);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      // Enforce a slight delay between end of audio output and setting talking state to false
       timeoutRef.current = setTimeout(
         () => setIsTalking(false),
         TALKING_STATE_COOLDOWN_MS
@@ -68,62 +60,57 @@ export default function BasicFace({
     }
   }, [volume]);
 
-  // Render the face on the canvas
+  // рендер лица
   useEffect(() => {
-    const ctx = canvasRef.current?.getContext('2d')!;
-    renderBasicFace({ ctx, mouthScale, eyeScale, color });
+    const ctx = canvasRef.current?.getContext('2d');
+    if (ctx) renderBasicFace({ ctx, mouthScale, eyeScale, color });
   }, [canvasRef, volume, eyeScale, mouthScale, color, scale]);
 
-  // Render the icon on the separate canvas
+  // рендер шляпы
   useEffect(() => {
-    const ctx = iconCanvasRef.current?.getContext('2d')!;
-    if (ctx) {
-      renderIcon({ ctx });
-    }
+    const ctx = hatCanvasRef.current?.getContext('2d');
+    if (ctx) renderIcon({ ctx });
   }, [scale]);
 
   const canvasSize = radius * 2 * scale;
-const hatScale = 1.2;
-const hatCanvasSize = canvasSize * hatScale;
-
 
   return (
-  <div
-    style={{
-      position: 'relative',
-      display: 'inline-block',
-      transform: 'scale(1.3)', // ← увеличивает всё сразу (лицо + шляпу)
-      transformOrigin: 'center',
-    }}
-  >
-    <canvas
-      className="basic-face"
-      ref={canvasRef}
-      width={canvasSize}
-      height={canvasSize}
+    <div
       style={{
-        display: 'block',
-        borderRadius: '50%',
-        transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,
+        position: 'relative',
+        display: 'inline-block',
+        transform: 'scale(1.3)', // увеличивает весь контейнер
+        transformOrigin: 'center',
       }}
-    />
-    <canvas
-      className="icon-overlay"
-      ref={iconCanvasRef}
-      width={hatCanvasSize}
-      height={hatCanvasSize}
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: '50%',
-        marginLeft: -hatCanvasSize / 2,
-        display: 'block',
-        pointerEvents: 'none',
-        transform: `translateY(${hoverPosition + 150}px) rotate(${tiltAngle}deg)`,
-      }}
-    />
-  </div>
-);
+    >
+      {/* Лицо */}
+      <canvas
+        className="basic-face"
+        ref={canvasRef}
+        width={canvasSize}
+        height={canvasSize}
+        style={{
+          display: 'block',
+          borderRadius: '50%',
+          transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,
+        }}
+      />
 
-
+      {/* Новый канвас с шляпой */}
+      <canvas
+        className="hat-overlay"
+        ref={hatCanvasRef}
+        width={canvasSize}
+        height={canvasSize}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: '50%',
+          transform: `translateX(-50%) translateY(${hoverPosition - 80}px) rotate(${tiltAngle}deg)`,
+          display: 'block',
+          pointerEvents: 'none',
+        }}
+      />
+    </div>
+  );
 }

@@ -28,16 +28,13 @@ type BasicFaceProps = {
 };
 
 // Настройка canvas для четкости на Retina дисплеях
-const setupCanvas = (canvas: HTMLCanvasElement, logicalWidth: number, logicalHeight: number) => {
+const setupCanvasDPR = (canvas: HTMLCanvasElement) => {
   const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
   
-  // Устанавливаем физический размер canvas
-  canvas.width = logicalWidth * dpr;
-  canvas.height = logicalHeight * dpr;
-  
-  // Устанавливаем CSS размер (логический)
-  canvas.style.width = `${logicalWidth}px`;
-  canvas.style.height = `${logicalHeight}px`;
+  // Устанавливаем физический размер canvas с учетом DPR
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
   
   // Масштабируем контекст
   const ctx = canvas.getContext('2d');

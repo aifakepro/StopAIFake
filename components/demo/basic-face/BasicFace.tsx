@@ -83,7 +83,9 @@ export default function BasicFace({
   }, [scale]);
 
   const canvasSize = radius * 2 * scale;
-  const hatScale = 1.2;
+const hatScale = 1.2;
+const hatCanvasSize = canvasSize * hatScale;
+
 
   return (
     <>

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import { RefObject, useEffect, useState, useRef } from 'react';
-import { renderBasicFace, renderHat } from './basic-face-render';
+import { renderBasicFace, renderIcon } from './basic-face-render';
 import useFace from '../../../hooks/demo/use-face';
 import useHover from '../../../hooks/demo/use-hover';
 import useTilt from '../../../hooks/demo/use-tilt';
@@ -29,7 +29,7 @@ export default function BasicFace({
   color,
 }: BasicFaceProps) {
   const timeoutRef = useRef<NodeJS.Timeout>(null);
-  const hatCanvasRef = useRef<HTMLCanvasElement>(null);
+  const iconCanvasRef = useRef<HTMLCanvasElement>(null);
   
   // Audio output volume
   const { volume } = useLiveAPIContext();
@@ -71,55 +71,42 @@ export default function BasicFace({
   // Render the face on the canvas
   useEffect(() => {
     const ctx = canvasRef.current?.getContext('2d')!;
-    const hatCtx = hatCanvasRef.current?.getContext('2d')!;
-    
-    if (ctx) {
-      renderBasicFace({ ctx, mouthScale, eyeScale, color });
-    }
-    
-    if (hatCtx) {
-      renderHat({ ctx: hatCtx });
-    }
+    renderBasicFace({ ctx, mouthScale, eyeScale, color });
   }, [canvasRef, volume, eyeScale, mouthScale, color, scale]);
 
-  const canvasSize = radius * 2 * scale;
+  // Render the icon on the separate canvas
+  useEffect(() => {
+    const ctx = iconCanvasRef.current?.getContext('2d')!;
+    if (ctx) {
+      renderIcon({ ctx, color: '#dc5513' });
+    }
+  }, [scale]);
 
   return (
-    <div
-      style={{
-        position: 'relative',
-        width: canvasSize,
-        height: canvasSize,
-        transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,
-      }}
-    >
-      {/* Canvas для шляпы - сзади */}
-      <canvas
-        ref={hatCanvasRef}
-        width={canvasSize}
-        height={canvasSize}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          display: 'block',
-          zIndex: 0,
-        }}
-      />
-      
-      {/* Canvas для лица - спереди с круглой маской */}
+    <div style={{ position: 'relative', display: 'inline-block' }}>
       <canvas
         className="basic-face"
         ref={canvasRef}
-        width={canvasSize}
-        height={canvasSize}
+        width={radius * 2 * scale}
+        height={radius * 2 * scale}
+        style={{
+          display: 'block',
+          borderRadius: '50%',
+          transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,
+        }}
+      />
+      <canvas
+        className="icon-overlay"
+        ref={iconCanvasRef}
+        width={radius * 2 * scale}
+        height={radius * 2 * scale}
         style={{
           position: 'absolute',
           top: 0,
           left: 0,
           display: 'block',
-          borderRadius: '50%',
-          zIndex: 1,
+          pointerEvents: 'none',
+          transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,
         }}
       />
     </div>

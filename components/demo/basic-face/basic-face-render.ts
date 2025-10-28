@@ -46,7 +46,7 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.arc(faceX, faceY, faceRadius, 0, Math.PI * 2);
   ctx.fill();
 
-  // === ГЛАЗА (не трогаем)
+  // === ГЛАЗА
   const eyesCenter = [width / 2, height / 2.425];
   const eyesOffset = width / 15;
   const eyeRadius = width / 30;
@@ -59,7 +59,7 @@ export function renderBasicFace(props: BasicFaceProps) {
   eye(ctx, eyesPosition[0], eyeRadius, eyesOpenness + 0.1);
   eye(ctx, eyesPosition[1], eyeRadius, eyesOpenness + 0.1);
 
-  // === РОТ (не трогаем)
+  // === РОТ
   const mouthCenter = [width / 2, (height / 2.875) * 1.55];
   const mouthExtent = [width / 10, (height / 5) * mouthOpenness + 10];
 
@@ -73,7 +73,7 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.fill();
   ctx.restore();
 
-  // === SVG-ШАПКА (только добавляем, не трогаем остальное)
+  // === SVG-ШАПКА ===
   const svgMarkup = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 376.78 152.84">
   <defs>
@@ -91,25 +91,28 @@ export function renderBasicFace(props: BasicFaceProps) {
   </g>
 </svg>`;
 
+  // Контейнер для SVG
   const svgContainer = document.createElement('div');
   svgContainer.innerHTML = svgMarkup;
   const svgElement = svgContainer.firstElementChild as SVGElement;
 
   const canvasParent = ctx.canvas.parentElement;
   if (canvasParent) {
-    // удаляем старую шляпу, если есть
-    const existing = canvasParent.querySelector('svg');
-    if (existing) existing.remove();
+    let existing = canvasParent.querySelector('svg');
+    if (!existing) {
+      canvasParent.style.position = 'relative';
+      svgElement.style.position = 'absolute';
+      svgElement.style.pointerEvents = 'none';
+      svgElement.style.width = '380px'; // подгони вручную
+      svgElement.style.height = '160px';
+      canvasParent.appendChild(svgElement);
+      existing = svgElement;
+    }
 
-    // позиционируем SVG над кругом (центр по canvas)
-    svgElement.style.position = 'absolute';
-    svgElement.style.pointerEvents = 'none';
-    svgElement.style.width = '380px';   // ← подгони вручную под ПК
-    svgElement.style.height = '160px';  // ← подгони вручную под ПК
-    svgElement.style.left = `${faceX - 350}px`; // центрируем
-    svgElement.style.top = `${faceY - faceRadius - 300}px`; // ставим “на голову”
-
-    canvasParent.style.position = 'relative';
-    canvasParent.appendChild(svgElement);
+    // === вот ключ — обновляем позицию каждый раз ===
+    const hatX = faceX - 190; // смещение, чтобы центр шляпы совпал с кругом
+    const hatY = faceY - faceRadius - 120; // "на голову"
+    (existing as HTMLElement).style.left = `${hatX}px`;
+    (existing as HTMLElement).style.top = `${hatY}px`;
   }
 }

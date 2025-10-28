@@ -36,15 +36,44 @@ export function renderBasicFace(props: BasicFaceProps) {
   // Очистка канваса
   ctx.clearRect(0, 0, width, height);
 
-  // Отрисовка фона
+  // === КРУГ (ГОЛОВА)
+  const faceX = width / 2;
+  const faceY = height / 2;
+  const faceRadius = width / 2 - 20;
+
   ctx.fillStyle = color || 'white';
   ctx.beginPath();
-  ctx.arc(width / 2, height / 2, width / 2 - 20, 0, Math.PI * 2);
+  ctx.arc(faceX, faceY, faceRadius, 0, Math.PI * 2);
   ctx.fill();
 
-  // ... остальной код лица
+  // === ГЛАЗА (не трогаем)
+  const eyesCenter = [width / 2, height / 2.425];
+  const eyesOffset = width / 15;
+  const eyeRadius = width / 30;
+  const eyesPosition: Array<[number, number]> = [
+    [eyesCenter[0] - eyesOffset, eyesCenter[1]],
+    [eyesCenter[0] + eyesOffset, eyesCenter[1]],
+  ];
 
-  // Добавляем SVG как DOM-элемент
+  ctx.fillStyle = 'black';
+  eye(ctx, eyesPosition[0], eyeRadius, eyesOpenness + 0.1);
+  eye(ctx, eyesPosition[1], eyeRadius, eyesOpenness + 0.1);
+
+  // === РОТ (не трогаем)
+  const mouthCenter = [width / 2, (height / 2.875) * 1.55];
+  const mouthExtent = [width / 10, (height / 5) * mouthOpenness + 10];
+
+  ctx.save();
+  ctx.translate(mouthCenter[0], mouthCenter[1]);
+  ctx.scale(1, mouthOpenness + height * 0.002);
+  ctx.fillStyle = 'black';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, mouthExtent[0], mouthExtent[1], 0, 0, Math.PI, false);
+  ctx.ellipse(0, 0, mouthExtent[0], mouthExtent[1] * 0.45, 0, 0, Math.PI, true);
+  ctx.fill();
+  ctx.restore();
+
+  // === SVG-ШАПКА (только добавляем, не трогаем остальное)
   const svgMarkup = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 376.78 152.84">
   <defs>
@@ -67,12 +96,19 @@ export function renderBasicFace(props: BasicFaceProps) {
   const svgElement = svgContainer.firstElementChild as SVGElement;
 
   const canvasParent = ctx.canvas.parentElement;
-  if (canvasParent && !canvasParent.querySelector('svg')) {
+  if (canvasParent) {
+    // удаляем старую шляпу, если есть
+    const existing = canvasParent.querySelector('svg');
+    if (existing) existing.remove();
+
+    // позиционируем SVG над кругом (центр по canvas)
     svgElement.style.position = 'absolute';
-    svgElement.style.top = '0';
-    svgElement.style.left = '0';
-    svgElement.style.width = '100%';
-    svgElement.style.height = '100%';
+    svgElement.style.pointerEvents = 'none';
+    svgElement.style.width = '380px';   // ← подгони вручную под ПК
+    svgElement.style.height = '160px';  // ← подгони вручную под ПК
+    svgElement.style.left = `${faceX - 190}px`; // центрируем
+    svgElement.style.top = `${faceY - faceRadius - 120}px`; // ставим “на голову”
+
     canvasParent.style.position = 'relative';
     canvasParent.appendChild(svgElement);
   }

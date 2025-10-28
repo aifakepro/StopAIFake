@@ -1,11 +1,13 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
-*/
+import { RefObject, useEffect, useState, useRef } from 'react';
+
+// Minimum volume level that indicates audio output is occurring
+const AUDIO_OUTPUT_DETECTION_THRESHOLD = 0.05;
+// Amount of delay between end of audio output and setting talking state to false
+const TALKING_STATE_COOLDOWN_MS = 2000;
+
 type BasicFaceProps = {
-  ctx: CanvasRenderingContext2D;
-  mouthScale: number;
-  eyeScale: number;
+  canvasRef: RefObject<HTMLCanvasElement | null>;
+  radius?: number;
   color?: string;
 };
 
@@ -24,85 +26,7 @@ const eye = (
   ctx.fill();
 };
 
-const roundRect = (
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  radius: number
-) => {
-  ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.lineTo(x + width - radius, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-  ctx.lineTo(x + width, y + height - radius);
-  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-  ctx.lineTo(x + radius, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-  ctx.lineTo(x, y + radius);
-  ctx.quadraticCurveTo(x, y, x + radius, y);
-  ctx.closePath();
-};
-
-const drawHat = (
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  scale: number
-) => {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(scale, scale);
-  
-  // Градиент как в SVG
-  const gradient = ctx.createLinearGradient(-188.39, 76.42, 188.39, 76.42);
-  gradient.addColorStop(0.04, '#5092ff');
-  gradient.addColorStop(0.53, '#7ec5ff');
-  gradient.addColorStop(0.94, '#457fff');
-  
-  // Основная форма шляпы из SVG path
-  ctx.fillStyle = gradient;
-  ctx.strokeStyle = '#5a90cc';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  
-  // Координаты из SVG path, смещённые на -93.13, -56.49
-  ctx.moveTo(0.54, 114.84);
-  ctx.bezierCurveTo(0.54, 114.84, 0.54, 114.84, 0.54, 114.84);
-  ctx.bezierCurveTo(-0.03, 109.84, 5.71, 109.17, 9.87, 96.84);
-  ctx.bezierCurveTo(15.7, 79.58, 7.77, 71.04, 7.87, 44.18);
-  ctx.bezierCurveTo(7.93, 28.41, 7.97, 17.32, 15.2, 9.51);
-  ctx.bezierCurveTo(26.2, -2.33, 47.01, 0.51, 54.54, 1.51);
-  ctx.bezierCurveTo(101.05, 7.4, 148.33, 0.51, 195.2, 1.51);
-  ctx.bezierCurveTo(244.81, 2.62, 294.43, 13.07, 343.87, 8.84);
-  ctx.bezierCurveTo(349.29, 8.38, 363.6, 7, 371.2, 15.51);
-  ctx.bezierCurveTo(379.69, 25, 372.89, 39.01, 371.87, 66.84);
-  ctx.bezierCurveTo(370.66, 99.65, 379.2, 104.48, 375.2, 115.51);
-  ctx.bezierCurveTo(366.43, 139.69, 292.93, 154.04, 185.2, 152.18);
-  ctx.bezierCurveTo(6.34, 149.08, 1.73, 125.38, 0.54, 114.84);
-  ctx.closePath();
-  
-  ctx.fill();
-  ctx.stroke();
-  
-  // Вертикальная оранжевая полоска
-  ctx.fillStyle = '#dc5513';
-  roundRect(83.15, -2.98, 29.59, 54, 8.33);
-  ctx.fill();
-  
-  // Горизонтальная оранжевая полоска (повёрнутая)
-  ctx.save();
-  ctx.translate(176.68, 49.11);
-  ctx.rotate(-Math.PI / 2);
-  roundRect(-32.395, -14.795, 64.79, 29.59, 8.33);
-  ctx.fill();
-  ctx.restore();
-  
-  ctx.restore();
-};
-
-export function renderBasicFace(props: BasicFaceProps) {
+function renderBasicFace(props: any) {
   const {
     ctx,
     eyeScale: eyesOpenness,
@@ -113,16 +37,10 @@ export function renderBasicFace(props: BasicFaceProps) {
   
   ctx.clearRect(0, 0, width, height);
   
-  const faceRadius = width / 2 - 20;
-  
   ctx.fillStyle = color || 'white';
   ctx.beginPath();
-  ctx.arc(width / 2, height / 2, faceRadius, 0, Math.PI * 2);
+  ctx.arc(width / 2, height / 2, width / 2 - 20, 0, Math.PI * 2);
   ctx.fill();
-  
-  // Шляпа по центру, ты сам поднимешь
-  const hatScale = faceRadius / 250;
-  drawHat(ctx, width / 2 - 188.39 * hatScale, height / 2, hatScale);
   
   const eyesCenter = [width / 2, height / 2.425];
   const eyesOffset = width / 15;
@@ -148,4 +66,88 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.ellipse(0, 0, mouthExtent[0], mouthExtent[1] * 0.45, 0, 0, Math.PI, true);
   ctx.fill();
   ctx.restore();
+}
+
+export default function BasicFace({
+  canvasRef,
+  radius = 250,
+  color,
+}: BasicFaceProps) {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [volume, setVolume] = useState(0);
+  const [isTalking, setIsTalking] = useState(false);
+  const [scale, setScale] = useState(0.1);
+  const [eyeScale, setEyeScale] = useState(1);
+  const [mouthScale, setMouthScale] = useState(0);
+  const [hoverPosition, setHoverPosition] = useState(0);
+  const [tiltAngle, setTiltAngle] = useState(0);
+
+  useEffect(() => {
+    function calculateScale() {
+      setScale(Math.min(window.innerWidth, window.innerHeight) / 1000);
+    }
+    window.addEventListener('resize', calculateScale);
+    calculateScale();
+    return () => window.removeEventListener('resize', calculateScale);
+  }, []);
+
+  useEffect(() => {
+    if (volume > AUDIO_OUTPUT_DETECTION_THRESHOLD) {
+      setIsTalking(true);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(
+        () => setIsTalking(false),
+        TALKING_STATE_COOLDOWN_MS
+      );
+    }
+  }, [volume]);
+
+  useEffect(() => {
+    const ctx = canvasRef.current?.getContext('2d');
+    if (ctx) {
+      renderBasicFace({ ctx, mouthScale, eyeScale, color });
+    }
+  }, [canvasRef, volume, eyeScale, mouthScale, color, scale]);
+
+  return (
+    <div style={{ position: 'relative', display: 'inline-block' }}>
+      <svg 
+        id="hat" 
+        xmlns="http://www.w3.org/2000/svg" 
+        viewBox="0 0 376.78 152.84"
+        style={{
+          position: 'absolute',
+          width: radius * 2 * scale * 0.8,
+          height: 'auto',
+          top: -80 * scale,
+          left: '50%',
+          transform: `translateX(-50%) translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,
+          pointerEvents: 'none',
+          zIndex: 10
+        }}
+      >
+        <defs>
+          <linearGradient id="gradient" x1="-22.37" y1="132.91" x2="543.7" y2="132.91" gradientUnits="userSpaceOnUse">
+            <stop offset="0.04" stopColor="#5092ff"/>
+            <stop offset="0.53" stopColor="#7ec5ff"/>
+            <stop offset="0.94" stopColor="#457fff"/>
+          </linearGradient>
+        </defs>
+        <path d="M93.67,171.33c-.57-5,5.17-5.67,9.33-18,5.83-17.26-2.1-25.8-2-52.66.06-15.77.1-26.86,7.33-34.67,11-11.84,31.81-9,39.34-8,46.51,5.89,93.79-1,140.66,0,49.61,1.11,99.23,11.56,148.67,7.33,5.42-.46,19.73-1.84,27.33,6.67,8.49,9.49,1.69,23.5.67,51.33-1.21,32.81,7.33,37.64,3.33,48.67-8.77,24.18-82.27,38.53-190,36.67C99.47,205.57,94.86,181.87,93.67,171.33Z" transform="translate(-93.13 -56.49)" style={{stroke:'#5a90cc', strokeMiterlimit:10, fill:'url(#gradient)'}}/>
+        <rect x="176.28" y="53.51" width="29.59" height="54" rx="8.33" style={{fill:'#dc5513'}}/>
+        <rect x="269.81" y="105.6" width="29.59" height="64.79" rx="8.33" transform="translate(53.48 366.11) rotate(-90)" style={{fill:'#dc5513'}}/>
+      </svg>
+      <canvas
+        className="basic-face"
+        ref={canvasRef}
+        width={radius * 2 * scale}
+        height={radius * 2 * scale}
+        style={{
+          display: 'block',
+          borderRadius: '50%',
+          transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,
+        }}
+      />
+    </div>
+  );
 }

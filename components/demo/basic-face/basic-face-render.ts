@@ -56,10 +56,6 @@ export function renderBasicFace(props: BasicFaceProps) {
   // Clear the canvas
   ctx.clearRect(0, 0, width, height);
   
-  // Улучшение качества рендеринга изображений
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-  
   const faceRadius = width / 2 - 20;
   const centerX = width / 2;
   const centerY = height / 2;

@@ -35,7 +35,7 @@ function drawHat(ctx: CanvasRenderingContext2D, x: number, y: number, scale: num
   ctx.scale(scale, scale);
   
   // Центрируем шляпу
-  ctx.translate(-187, -152);
+  ctx.translate(-187, -152 + 30);
   
   // --- Градиент для основной формы ---
   const grad = ctx.createLinearGradient(-115.5, 76.42, 450.57, 76.42);

@@ -64,12 +64,15 @@ export function renderBasicFace(props: BasicFaceProps) {
 
   // === ШЛЯПА ===
   ctx.save();
-  const faceRadius = width / 2 - 20;
-  const hatScale = (faceRadius * 2) / 500 * 0.2; // масштаб шляпы
-  const hatYOffset = -faceRadius * 2.5; // сдвиг шляпы вверх/вниз
-  ctx.translate(width / 2, height / 2 + hatYOffset);
-  ctx.scale(hatScale, hatScale);
-  ctx.translate(-376.78 / 2, -152.84 / 2);
+const faceRadius = width / 2 - 20;
+const hatScale = (faceRadius * 2) / 500 * 0.2; // масштаб шляпы
+const hatYOffset = -faceRadius * 2.5; // сдвиг шляпы вверх/вниз
+const hatFixedCenterY = -152.84 / 2; // фиксированное смещение шляпы по центру
+
+ctx.translate(width / 2, height / 2 + hatYOffset + hatFixedCenterY);
+ctx.scale(hatScale, hatScale);
+ctx.translate(-376.78 / 2, 0); // убираем фиксированное смещение по Y
+
 
   // Рисуем синюю шляпу (SVG path)
   const gradient = ctx.createLinearGradient(-115.5, 76.42, 450.57, 76.42);

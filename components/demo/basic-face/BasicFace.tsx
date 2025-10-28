@@ -87,26 +87,6 @@ export default function BasicFace({
     return () => window.removeEventListener('resize', calculateScale);
   }, []);
   
-  // Настройка canvas с учетом devicePixelRatio для четких изображений на мобильных
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const dpr = window.devicePixelRatio || 1;
-    const displayWidth = radius * 2 * scale;
-    const displayHeight = radius * 2 * scale;
-    
-    canvas.width = displayWidth * dpr;
-    canvas.height = displayHeight * dpr;
-    canvas.style.width = `${displayWidth}px`;
-    canvas.style.height = `${displayHeight}px`;
-    
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.scale(dpr, dpr);
-    }
-  }, [canvasRef, radius, scale]);
-  
   // Detect whether the agent is talking based on audio output volume
   // Set talking state when volume is detected
   useEffect(() => {
@@ -122,24 +102,42 @@ export default function BasicFace({
   }, [volume]);
   
   // Render the face on the canvas
-  useEffect(() => {
-    const ctx = canvasRef.current?.getContext('2d');
-    if (!ctx) return;
-    
-    renderBasicFace({ 
-      ctx, 
-      mouthScale, 
-      eyeScale, 
-      color,
-      textureImage,
-      hatImage
-    });
-  }, [canvasRef, volume, eyeScale, mouthScale, color, scale, textureImage, hatImage]);
+ useEffect(() => {
+  const canvas = canvasRef.current;
+  const ctx = canvas?.getContext('2d');
+  if (!ctx) return;
+
+  // Учитываем плотность пикселей
+  const dpr = window.devicePixelRatio || 1;
+  const logicalWidth = radius * 2 * scale;
+  const logicalHeight = radius * 2 * scale;
+
+  // Настраиваем canvas под DPR
+  canvas.width = logicalWidth * dpr;
+  canvas.height = logicalHeight * dpr;
+  canvas.style.width = `${logicalWidth}px`;
+  canvas.style.height = `${logicalHeight}px`;
+
+  // Масштабируем контекст
+  ctx.scale(dpr, dpr);
+
+  renderBasicFace({
+    ctx,
+    mouthScale,
+    eyeScale,
+    color,
+    textureImage,
+    hatImage,
+  });
+}, [canvasRef, volume, eyeScale, mouthScale, color, scale, textureImage, hatImage, radius]);
+
   
   return (
     <canvas
       className="basic-face"
       ref={canvasRef}
+      width={radius * 2 * scale}
+      height={radius * 2 * scale}
       style={{
         display: 'block',
         transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,

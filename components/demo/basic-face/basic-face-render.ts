@@ -9,26 +9,6 @@ type BasicFaceProps = {
   color?: string;
 };
 
-// Кэш для загруженных изображений
-const imageCache: { [key: string]: HTMLImageElement } = {};
-
-const loadImage = (url: string): Promise<HTMLImageElement> => {
-  if (imageCache[url]) {
-    return Promise.resolve(imageCache[url]);
-  }
-  
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      imageCache[url] = img;
-      resolve(img);
-    };
-    img.onerror = reject;
-    img.src = url;
-  });
-};
-
 const eye = (
   ctx: CanvasRenderingContext2D,
   pos: [number, number],
@@ -44,6 +24,92 @@ const eye = (
   ctx.fill();
 };
 
+const drawHat = (
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  centerY: number,
+  scale: number
+) => {
+  ctx.save();
+  ctx.translate(centerX, centerY);
+  ctx.scale(scale, scale);
+  
+  // Gradient for the hat base
+  const gradient = ctx.createLinearGradient(-188.39, 76.42, 377.77, 76.42);
+  gradient.addColorStop(0.04, '#5092ff');
+  gradient.addColorStop(0.53, '#7ec5ff');
+  gradient.addColorStop(0.94, '#457fff');
+  
+  // Draw the main hat shape
+  ctx.fillStyle = gradient;
+  ctx.strokeStyle = '#5a90cc';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0.54, 114.84);
+  ctx.bezierCurveTo(0.54 - 0.57, 114.84 - 5, 0.54 + 5.17, 114.84 - 5.67, 0.54 + 9.33, 114.84 - 18);
+  ctx.bezierCurveTo(0.54 + 9.33 + 5.83, 114.84 - 18 - 17.26, 0.54 + 9.33 - 2.1, 114.84 - 18 - 25.8, 0.54 + 9.33 - 2, 114.84 - 18 - 52.66);
+  ctx.bezierCurveTo(0.54 + 9.33 - 2 + 0.06, 114.84 - 18 - 52.66 - 15.77, 0.54 + 9.33 - 2 + 0.1, 114.84 - 18 - 52.66 - 26.86, 0.54 + 9.33 - 2 + 7.33, 114.84 - 18 - 52.66 - 34.67);
+  ctx.bezierCurveTo(0.54 + 9.33 - 2 + 7.33 + 11, 114.84 - 18 - 52.66 - 34.67 - 11.84, 0.54 + 9.33 - 2 + 7.33 + 31.81, 114.84 - 18 - 52.66 - 34.67 - 9, 0.54 + 9.33 - 2 + 7.33 + 39.34, 114.84 - 18 - 52.66 - 34.67 - 8);
+  ctx.lineTo(0.54 + 9.33 - 2 + 7.33 + 39.34 + 46.51, 114.84 - 18 - 52.66 - 34.67 - 8 + 5.89);
+  ctx.lineTo(0.54 + 9.33 - 2 + 7.33 + 39.34 + 46.51 + 93.79, 114.84 - 18 - 52.66 - 34.67 - 8 + 5.89 - 1);
+  ctx.lineTo(0.54 + 9.33 - 2 + 7.33 + 39.34 + 46.51 + 93.79 + 140.66, 114.84 - 18 - 52.66 - 34.67 - 8 + 5.89);
+  ctx.bezierCurveTo(377.77, 8.16, 377.77 + 5.42, 8.16 - 0.46, 377.77 + 27.33, 8.16 + 6.67);
+  ctx.bezierCurveTo(377.77 + 27.33 + 8.49, 8.16 + 6.67 + 9.49, 377.77 + 27.33 + 1.69, 8.16 + 6.67 + 23.5, 377.77 + 27.33 + 0.67, 8.16 + 6.67 + 51.33);
+  ctx.lineTo(377.77 + 28, 8.16 + 58 + 32.81);
+  ctx.bezierCurveTo(377.77 + 28 + 7.33, 8.16 + 90.81 + 5.83, 377.77 + 28 + 3.33, 8.16 + 90.81 + 10.86, 377.77 + 28 + 3.33, 8.16 + 90.81 + 10.86 + 10);
+  ctx.bezierCurveTo(377.77 + 31.33 - 8.77, 8.16 + 101.67 + 24.18, 377.77 + 31.33 - 82.27, 8.16 + 101.67 + 38.53, 377.77 + 31.33 - 190, 8.16 + 101.67 + 36.67);
+  ctx.bezierCurveTo(6.34, 149.08, 1.73, 125.38, 0.54, 114.84);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  
+  // Draw the vertical orange rectangle (part of the hat)
+  ctx.fillStyle = '#dc5513';
+  const rectX = 83.15 - 188.39;
+  const rectY = -3 - 76.42;
+  const rectWidth = 29.59;
+  const rectHeight = 54;
+  const rectRadius = 8.33;
+  
+  ctx.beginPath();
+  ctx.moveTo(rectX + rectRadius, rectY);
+  ctx.lineTo(rectX + rectWidth - rectRadius, rectY);
+  ctx.arcTo(rectX + rectWidth, rectY, rectX + rectWidth, rectY + rectRadius, rectRadius);
+  ctx.lineTo(rectX + rectWidth, rectY + rectHeight - rectRadius);
+  ctx.arcTo(rectX + rectWidth, rectY + rectHeight, rectX + rectWidth - rectRadius, rectY + rectHeight, rectRadius);
+  ctx.lineTo(rectX + rectRadius, rectY + rectHeight);
+  ctx.arcTo(rectX, rectY + rectHeight, rectX, rectY + rectHeight - rectRadius, rectRadius);
+  ctx.lineTo(rectX, rectY + rectRadius);
+  ctx.arcTo(rectX, rectY, rectX + rectRadius, rectY, rectRadius);
+  ctx.closePath();
+  ctx.fill();
+  
+  // Draw the horizontal orange rectangle
+  const rect2CenterX = 176.68 - 188.39;
+  const rect2CenterY = 49.11 - 76.42;
+  ctx.translate(rect2CenterX, rect2CenterY);
+  ctx.rotate(-Math.PI / 2);
+  
+  const rect2Width = 29.59;
+  const rect2Height = 64.79;
+  const rect2Radius = 8.33;
+  
+  ctx.beginPath();
+  ctx.moveTo(-rect2Width/2 + rect2Radius, -rect2Height/2);
+  ctx.lineTo(rect2Width/2 - rect2Radius, -rect2Height/2);
+  ctx.arcTo(rect2Width/2, -rect2Height/2, rect2Width/2, -rect2Height/2 + rect2Radius, rect2Radius);
+  ctx.lineTo(rect2Width/2, rect2Height/2 - rect2Radius);
+  ctx.arcTo(rect2Width/2, rect2Height/2, rect2Width/2 - rect2Radius, rect2Height/2, rect2Radius);
+  ctx.lineTo(-rect2Width/2 + rect2Radius, rect2Height/2);
+  ctx.arcTo(-rect2Width/2, rect2Height/2, -rect2Width/2, rect2Height/2 - rect2Radius, rect2Radius);
+  ctx.lineTo(-rect2Width/2, -rect2Height/2 + rect2Radius);
+  ctx.arcTo(-rect2Width/2, -rect2Height/2, -rect2Width/2 + rect2Radius, -rect2Height/2, rect2Radius);
+  ctx.closePath();
+  ctx.fill();
+  
+  ctx.restore();
+};
+
 export function renderBasicFace(props: BasicFaceProps) {
   const {
     ctx,
@@ -56,29 +122,16 @@ export function renderBasicFace(props: BasicFaceProps) {
   // Clear the canvas
   ctx.clearRect(0, 0, width, height);
   
-  const faceRadius = width / 2 - 20;
-  const centerX = width / 2;
-  const centerY = height / 2;
+  // Draw the hat (centered at top of canvas, adjust Y position as needed)
+  const hatScale = width / 800; // Adjust this to resize the hat
+  const hatY = height * 0.15; // Adjust this value to move hat up/down (0.15 = 15% from top)
+  drawHat(ctx, width / 2, hatY, hatScale);
   
-  // Draw the background circle with texture
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, faceRadius, 0, Math.PI * 2);
-  ctx.clip();
-  
-  // Fill with color first
+  // Draw the background circle
   ctx.fillStyle = color || 'white';
+  ctx.beginPath();
+  ctx.arc(width / 2, height / 2, width / 2 - 20, 0, Math.PI * 2);
   ctx.fill();
-  
-  // Try to draw texture
-  const textureImg = imageCache['https://i.ibb.co/7dNm0Ksz/BOTmed1.jpg'];
-  if (textureImg && textureImg.complete) {
-    ctx.globalAlpha = 1.0;
-    ctx.drawImage(textureImg, centerX - faceRadius, centerY - faceRadius, faceRadius * 2, faceRadius * 2);
-    ctx.globalAlpha = 1.0;
-  }
-  
-  ctx.restore();
   
   const eyesCenter = [width / 2, height / 2.425];
   const eyesOffset = width / 15;
@@ -106,38 +159,4 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.ellipse(0, 0, mouthExtent[0], mouthExtent[1] * 0.45, 0, 0, Math.PI, true);
   ctx.fill();
   ctx.restore();
-  
-  // Draw the hat (SVG version)
-  const svgText = `
-  <svg id="Шар_3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 376.78 152.84">
-    <defs>
-      <linearGradient id="Градієнт_без_назви_266" x1="-22.37" y1="132.91" x2="543.7" y2="132.91" gradientUnits="userSpaceOnUse">
-        <stop offset="0.04" stop-color="#5092ff"/>
-        <stop offset="0.53" stop-color="#7ec5ff"/>
-        <stop offset="0.94" stop-color="#457fff"/>
-      </linearGradient>
-    </defs>
-    <path d="M93.67,171.33c-.57-5,5.17-5.67,9.33-18,5.83-17.26-2.1-25.8-2-52.66.06-15.77.1-26.86,7.33-34.67,11-11.84,31.81-9,39.34-8,46.51,5.89,93.79-1,140.66,0,49.61,1.11,99.23,11.56,148.67,7.33,5.42-.46,19.73-1.84,27.33,6.67,8.49,9.49,1.69,23.5.67,51.33-1.21,32.81,7.33,37.64,3.33,48.67-8.77,24.18-82.27,38.53-190,36.67C99.47,205.57,94.86,181.87,93.67,171.33Z" transform="translate(-93.13 -56.49)" style="stroke:#5a90cc;stroke-miterlimit:10;fill:url(#Градієнт_без_назви_266)"/>
-    <rect x="176.28" y="53.51" width="29.59" height="54" rx="8.33" style="fill:#dc5513"/>
-    <rect x="269.81" y="105.6" width="29.59" height="64.79" rx="8.33" transform="translate(53.48 366.11) rotate(-90)" style="fill:#dc5513"/>
-  </svg>
-  `;
-  
-  const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
-  const url = URL.createObjectURL(svgBlob);
-  
-  loadImage(url).then(svgImg => {
-    const isMobile = width < 780;
-    const hatWidth = isMobile ? width * 0.7 : width * 1.4;
-    const hatHeight = hatWidth * (152.84 / 376.78);
-    const hatX = centerX - hatWidth / 2;
-    const hatY = centerY - faceRadius - hatHeight * (isMobile ? 0.15 : 0.3);
-  
-    ctx.drawImage(svgImg, hatX, hatY, hatWidth, hatHeight);
-    URL.revokeObjectURL(url);
-  }).catch(console.error);
 }
-
-// Предзагрузка изображений
-loadImage('https://i.ibb.co/7dNm0Ksz/BOTmed1.jpg').catch(console.error);
-loadImage('https://i.ibb.co/mVxKD0T8/kapBot1.png').catch(console.error);

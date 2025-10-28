@@ -27,24 +27,6 @@ type BasicFaceProps = {
   hatPath?: string;
 };
 
-// Настройка canvas для четкости на Retina дисплеях
-const setupCanvasDPR = (canvas: HTMLCanvasElement) => {
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
-  
-  // Устанавливаем физический размер canvas с учетом DPR
-  canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
-  
-  // Масштабируем контекст
-  const ctx = canvas.getContext('2d');
-  if (ctx) {
-    ctx.scale(dpr, dpr);
-  }
-  
-  return ctx;
-};
-
 export default function BasicFace({
   canvasRef,
   radius = 250,
@@ -73,56 +55,26 @@ export default function BasicFace({
   // Image loading
   const [textureImage, setTextureImage] = useState<HTMLImageElement | null>(null);
   const [hatImage, setHatImage] = useState<HTMLImageElement | null>(null);
-  const [imagesLoaded, setImagesLoaded] = useState(false);
   
   // Load texture and hat images
   useEffect(() => {
     const TEXTURE_URL = texturePath || 'https://i.ibb.co/7dNm0Ksz/BOTmed1.jpg';
     const HAT_URL = hatPath || 'https://i.ibb.co/mVxKD0T8/kapBot1.png';
     
-    let textureLoaded = false;
-    let hatLoaded = false;
-    
-    const checkIfAllLoaded = () => {
-      if (textureLoaded && hatLoaded) {
-        setImagesLoaded(true);
-      }
-    };
-    
     if (TEXTURE_URL) {
       const texture = new Image();
       texture.crossOrigin = 'anonymous';
       texture.src = TEXTURE_URL;
-      texture.onload = () => {
-        setTextureImage(texture);
-        textureLoaded = true;
-        checkIfAllLoaded();
-      };
-      texture.onerror = () => {
-        console.error('Failed to load texture from:', TEXTURE_URL);
-        textureLoaded = true;
-        checkIfAllLoaded();
-      };
-    } else {
-      textureLoaded = true;
+      texture.onload = () => setTextureImage(texture);
+      texture.onerror = () => console.error('Failed to load texture from:', TEXTURE_URL);
     }
     
     if (HAT_URL) {
       const hat = new Image();
       hat.crossOrigin = 'anonymous';
       hat.src = HAT_URL;
-      hat.onload = () => {
-        setHatImage(hat);
-        hatLoaded = true;
-        checkIfAllLoaded();
-      };
-      hat.onerror = () => {
-        console.error('Failed to load hat from:', HAT_URL);
-        hatLoaded = true;
-        checkIfAllLoaded();
-      };
-    } else {
-      hatLoaded = true;
+      hat.onload = () => setHatImage(hat);
+      hat.onerror = () => console.error('Failed to load hat from:', HAT_URL);
     }
   }, [texturePath, hatPath]);
   
@@ -134,17 +86,6 @@ export default function BasicFace({
     calculateScale();
     return () => window.removeEventListener('resize', calculateScale);
   }, []);
-  
-  // Setup canvas with proper DPR when scale changes
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const logicalWidth = radius * 2 * scale;
-    const logicalHeight = radius * 2 * scale;
-    
-    setupCanvas(canvas, logicalWidth, logicalHeight);
-  }, [canvasRef, radius, scale]);
   
   // Detect whether the agent is talking based on audio output volume
   // Set talking state when volume is detected
@@ -173,12 +114,14 @@ export default function BasicFace({
       textureImage,
       hatImage
     });
-  }, [canvasRef, volume, eyeScale, mouthScale, color, scale, textureImage, hatImage, imagesLoaded]);
+  }, [canvasRef, volume, eyeScale, mouthScale, color, scale, textureImage, hatImage]);
   
   return (
     <canvas
       className="basic-face"
       ref={canvasRef}
+      width={radius * 2 * scale}
+      height={radius * 2 * scale}
       style={{
         display: 'block',
         transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,

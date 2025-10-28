@@ -83,6 +83,7 @@ export default function BasicFace({
   }, [scale]);
 
   const canvasSize = radius * 2 * scale;
+  const hatScale = 1.2;
 
   return (
     <>
@@ -98,18 +99,18 @@ export default function BasicFace({
         }}
       />
       <canvas
-        className="icon-overlay"
-        ref={iconCanvasRef}
-        width={canvasSize}
-        height={canvasSize}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: '50%',
-          marginLeft: -canvasSize / 2,
-          display: 'block',
-          pointerEvents: 'none',
-          transform: `translateY(${hoverPosition+150}px) rotate(${tiltAngle}deg)`,
+  className="icon-overlay"
+  ref={iconCanvasRef}
+  width={hatCanvasSize}
+  height={hatCanvasSize}
+  style={{
+    position: 'absolute',
+    top: 0,
+    left: '50%',
+    marginLeft: -hatCanvasSize / 2,
+    display: 'block',
+    pointerEvents: 'none',
+    transform: `translateY(${hoverPosition+150}px) rotate(${tiltAngle}deg)`,
         }}
       />
     </>

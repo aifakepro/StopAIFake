@@ -78,30 +78,32 @@ export default function BasicFace({
     }
   }, [texturePath, hatPath]);
   
-  // Set canvas size with device pixel ratio
+  // Calculate scale for responsive sizing
   useEffect(() => {
     function calculateScale() {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      
-      const baseScale = Math.min(window.innerWidth, window.innerHeight) / 1000;
-      setScale(baseScale);
-      
-      // Set display size
-      const displaySize = radius * 2 * baseScale;
-      canvas.style.width = `${displaySize}px`;
-      canvas.style.height = `${displaySize}px`;
-      
-      // Set actual size in memory (accounting for device pixel ratio)
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = displaySize * dpr;
-      canvas.height = displaySize * dpr;
+      setScale(Math.min(window.innerWidth, window.innerHeight) / 1000);
     }
-    
     window.addEventListener('resize', calculateScale);
     calculateScale();
     return () => window.removeEventListener('resize', calculateScale);
-  }, [canvasRef, radius]);
+  }, []);
+  
+  // Set canvas resolution with device pixel ratio
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const displaySize = radius * 2 * scale;
+    const dpr = window.devicePixelRatio || 1;
+    
+    // Set actual size in memory (accounting for device pixel ratio)
+    canvas.width = displaySize * dpr;
+    canvas.height = displaySize * dpr;
+    
+    // Set CSS display size
+    canvas.style.width = `${displaySize}px`;
+    canvas.style.height = `${displaySize}px`;
+  }, [canvasRef, radius, scale]);
   
   // Detect whether the agent is talking based on audio output volume
   // Set talking state when volume is detected

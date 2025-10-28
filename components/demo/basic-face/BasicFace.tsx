@@ -34,7 +34,7 @@ export default function BasicFace({
   texturePath,
   hatPath,
 }: BasicFaceProps) {
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout>(null);
   
   // Audio output volume
   const { volume } = useLiveAPIContext();
@@ -58,8 +58,8 @@ export default function BasicFace({
   
   // Load texture and hat images
   useEffect(() => {
-    const TEXTURE_URL = texturePath || 'https://i.ibb.co/7dNm0Ksz/BOTmed1.jpg';
-    const HAT_URL = hatPath || 'https://i.ibb.co/mVxKD0T8/kapBot1.png';
+    const TEXTURE_URL = texturePath || 'https://i.ibb.co/Q34VxmGm/waves.jpg';
+    const HAT_URL = hatPath || 'https://i.ibb.co/d4tfjJ1K/kapBot.png';
     
     if (TEXTURE_URL) {
       const texture = new Image();

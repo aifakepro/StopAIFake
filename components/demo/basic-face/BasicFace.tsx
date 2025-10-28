@@ -109,7 +109,7 @@ export default function BasicFace({
           marginLeft: -canvasSize / 2,
           display: 'block',
           pointerEvents: 'none',
-          transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,
+          transform: `translateY(${hoverPosition+50}px) rotate(${tiltAngle}deg)`,
         }}
       />
     </>

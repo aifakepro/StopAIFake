@@ -24,29 +24,74 @@ const eye = (
   ctx.fill();
 };
 
+// --- Функция рисования шляпы через Canvas API ---
+function drawHat(ctx: CanvasRenderingContext2D, faceX: number, faceY: number, scale: number) {
+  ctx.save();
+  ctx.translate(faceX, faceY);
+  ctx.scale(scale, scale);
+
+  // --- Градиент для основной формы ---
+  const grad = ctx.createLinearGradient(-115.5, 76.42, 450.57, 76.42);
+  grad.addColorStop(0.04, '#5092ff');
+  grad.addColorStop(0.53, '#7ec5ff');
+  grad.addColorStop(0.94, '#457fff');
+  ctx.fillStyle = grad;
+  ctx.strokeStyle = '#5a90cc';
+  ctx.lineWidth = 1;
+
+  // --- Путь шляпы ---
+  ctx.beginPath();
+  ctx.moveTo(0.54,114.84);
+  ctx.bezierCurveTo(-0.03,109.84,5.17,109.17,9.33,96);
+  ctx.bezierCurveTo(15.16,78.74,7.33,70.2,7.33,43.34);
+  ctx.bezierCurveTo(7.93,28.41,8,17.32,15.21,9.51);
+  ctx.bezierCurveTo(26.21,-2.33,46.02,0.56,53.54,1.51);
+  ctx.bezierCurveTo(100.06,7.4,147.33,1,194.21,1);
+  ctx.bezierCurveTo(243.81,2.11,293.44,12.67,342.87,8.44);
+  ctx.bezierCurveTo(348.29,7.98,362.6,6.6,370.21,15.11);
+  ctx.bezierCurveTo(378.69,24.6,371.9,38.61,370.87,66.44);
+  ctx.bezierCurveTo(369.66,99.25,378.21,104.08,374.22,115.11);
+  ctx.bezierCurveTo(365.45,139.29,291.94,153.64,184.22,151.78);
+  ctx.bezierCurveTo(6.34,149.08,1.74,125.38,0.54,114.84);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // --- Первый прямоугольник ---
+  ctx.fillStyle = '#dc5513';
+  ctx.beginPath();
+  ctx.roundRect(176.28, 53.51, 29.59, 54, 8.33);
+  ctx.fill();
+
+  // --- Второй прямоугольник с трансформацией ---
+  ctx.save();
+  ctx.translate(109.97, 272.98);
+  ctx.rotate(-Math.PI / 2); // -90 градусов
+  ctx.beginPath();
+  ctx.roundRect(176.68, 49.11, 29.59, 64.79, 8.33);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.restore();
+}
+
 export function renderBasicFace(props: BasicFaceProps) {
-  const {
-    ctx,
-    eyeScale: eyesOpenness,
-    mouthScale: mouthOpenness,
-    color,
-  } = props;
+  const { ctx, eyeScale: eyesOpenness, mouthScale: mouthOpenness, color } = props;
   const { width, height } = ctx.canvas;
 
   // Очистка канваса
   ctx.clearRect(0, 0, width, height);
 
-  // --- 1. Рисуем круг (лицо)
+  // --- 1. Лицо
   const faceX = width / 2;
   const faceY = height / 2;
   const faceRadius = width / 2 - 20;
-
   ctx.fillStyle = color || 'white';
   ctx.beginPath();
   ctx.arc(faceX, faceY, faceRadius, 0, Math.PI * 2);
   ctx.fill();
 
-  // --- 2. Глаза (НЕ ТРОГАЕМ)
+  // --- 2. Глаза
   const eyesCenter = [width / 2, height / 2.425];
   const eyesOffset = width / 15;
   const eyeRadius = width / 30;
@@ -54,15 +99,13 @@ export function renderBasicFace(props: BasicFaceProps) {
     [eyesCenter[0] - eyesOffset, eyesCenter[1]],
     [eyesCenter[0] + eyesOffset, eyesCenter[1]],
   ];
-
   ctx.fillStyle = 'black';
   eye(ctx, eyesPosition[0], eyeRadius, eyesOpenness + 0.1);
   eye(ctx, eyesPosition[1], eyeRadius, eyesOpenness + 0.1);
 
-  // --- 3. Рот (НЕ ТРОГАЕМ)
+  // --- 3. Рот
   const mouthCenter = [width / 2, (height / 2.875) * 1.55];
   const mouthExtent = [width / 10, (height / 5) * mouthOpenness + 10];
-
   ctx.save();
   ctx.translate(mouthCenter[0], mouthCenter[1]);
   ctx.scale(1, mouthOpenness + height * 0.002);
@@ -73,41 +116,7 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.fill();
   ctx.restore();
 
-  // --- 4. ШЛЯПА (всё остальное не трогаем)
-  const svgMarkup = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 376.78 152.84">
-  <defs>
-    <linearGradient id="Градієнт_без_назви_266" x1="-115.5" y1="76.42" x2="450.57" y2="76.42" gradientUnits="userSpaceOnUse">
-      <stop offset="0.04" stop-color="#5092ff"/>
-      <stop offset="0.53" stop-color="#7ec5ff"/>
-      <stop offset="0.94" stop-color="#457fff"/>
-    </linearGradient>
-  </defs>
-  <path d="M.54,114.84c-.57-5,5.17-5.67,9.33-18,5.83-17.26-2.1-25.8-2-52.66C7.93,28.41,8,17.32,15.21,9.51c11-11.84,31.81-8.95,39.33-8,46.52,5.89,93.79-1,140.67,0,49.6,1.11,99.23,11.56,148.66,7.33,5.42-.46,19.73-1.84,27.34,6.67,8.48,9.49,1.69,23.5.66,51.33-1.21,32.81,7.33,37.64,3.34,48.67-8.77,24.18-82.28,38.53-190,36.67C6.34,149.08,1.74,125.38.54,114.84Z"
-    style="stroke:#5a90cc;stroke-miterlimit:10;fill:url(#Градієнт_без_назви_266)"/>
-  <rect x="176.28" y="53.51" width="29.59" height="54" rx="8.33" style="fill:#dc5513"/>
-  <rect x="176.68" y="49.11" width="29.59" height="64.79" rx="8.33"
-    transform="translate(109.97 272.98) rotate(-90)" style="fill:#dc5513"/>
-</svg>`;
-
-  const svgBlob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
-  const url = URL.createObjectURL(svgBlob);
-  const img = new Image();
-
-  // Настройка смещения шляпы (ручная подгонка)
-  const hatOffsetX = -188; // смещение влево/вправо
-  const hatOffsetY = -80; // смещение вверх/вниз
-  const hatWidth = 376.78;
-  const hatHeight = 152.84;
-
-  img.onload = () => {
-    ctx.save();
-    // Привязка шляпы к кругу
-    ctx.translate(faceX + hatOffsetX, faceY - faceRadius + hatOffsetY);
-    ctx.drawImage(img, 0, 0, hatWidth, hatHeight);
-    ctx.restore();
-    URL.revokeObjectURL(url);
-  };
-
-  img.src = url;
+  // --- 4. Шляпа
+  const hatScale = faceRadius / 80; // настрой масштаб под лицо
+  drawHat(ctx, faceX, faceY - faceRadius + 10, hatScale);
 }

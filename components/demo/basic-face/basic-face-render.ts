@@ -11,6 +11,8 @@ type BasicFaceProps = {
 type IconProps = {
   ctx: CanvasRenderingContext2D;
   scale: number;
+  hatYOffset?: number;
+  hatSizeScale?: number;
 };
 const eye = (
   ctx: CanvasRenderingContext2D,
@@ -66,7 +68,12 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.restore();
 }
 export function renderIcon(props: IconProps) {
-  const { ctx } = props;
+  const isMobile = window.innerWidth < 768;
+  const { 
+    ctx, 
+    hatYOffset = isMobile ? 350 : 300, 
+    hatSizeScale = isMobile ? 0.8 : 0.7 
+  } = props;
   const { width, height } = ctx.canvas;
   
   // Clear the canvas
@@ -81,10 +88,10 @@ export function renderIcon(props: IconProps) {
   const hatTopY = faceCenter[1] - faceRadius;
   
   // Scale the hat based on face size
-  const hatScale = (faceRadius * 2) / 500 * 0.7;
+  const hatScale = (faceRadius * 2) / 500 * hatSizeScale;
   
   ctx.save();
-  ctx.translate(hatCenterX, hatTopY + 300 * hatScale);
+  ctx.translate(hatCenterX, hatTopY + hatYOffset * hatScale);
   ctx.scale(hatScale, hatScale);
   ctx.translate(-376.78 / 2, -152.84 / 2);
   

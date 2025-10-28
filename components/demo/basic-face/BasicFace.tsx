@@ -78,17 +78,19 @@ export default function BasicFace({
   useEffect(() => {
     const ctx = iconCanvasRef.current?.getContext('2d')!;
     if (ctx) {
-      renderIcon({ ctx, color: '#dc5513' });
+      renderIcon({ ctx });
     }
   }, [scale]);
 
+  const canvasSize = radius * 2 * scale;
+
   return (
-    <div style={{ position: 'relative', display: 'inline-block' }}>
+    <>
       <canvas
         className="basic-face"
         ref={canvasRef}
-        width={radius * 2 * scale}
-        height={radius * 2 * scale}
+        width={canvasSize}
+        height={canvasSize}
         style={{
           display: 'block',
           borderRadius: '50%',
@@ -98,17 +100,18 @@ export default function BasicFace({
       <canvas
         className="icon-overlay"
         ref={iconCanvasRef}
-        width={radius * 2 * scale}
-        height={radius * 2 * scale}
+        width={canvasSize}
+        height={canvasSize}
         style={{
           position: 'absolute',
           top: 0,
-          left: 0,
+          left: '50%',
+          marginLeft: -canvasSize / 2,
           display: 'block',
           pointerEvents: 'none',
           transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,
         }}
       />
-    </div>
+    </>
   );
 }

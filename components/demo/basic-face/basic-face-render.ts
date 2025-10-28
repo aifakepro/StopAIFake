@@ -81,11 +81,11 @@ export function renderIcon(props: IconProps) {
   
   // Position the hat at the top of the face
   const offsetX = width / 2;
-  const offsetY = 330 * scale;
+  const offsetY = 350 * scale;
   
   ctx.save();
   ctx.translate(offsetX, offsetY);
-  ctx.scale(scale * 1.0, scale * 1.0);
+  ctx.scale(scale * 1.2, scale * 1.2);
   ctx.translate(-376.78 / 2, -152.84 / 2);
   
   // Draw the blue hat shape from SVG path

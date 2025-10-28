@@ -8,12 +8,10 @@ type BasicFaceProps = {
   eyeScale: number;
   color?: string;
 };
-
 type IconProps = {
   ctx: CanvasRenderingContext2D;
   scale: number;
 };
-
 const eye = (
   ctx: CanvasRenderingContext2D,
   pos: [number, number],
@@ -28,7 +26,6 @@ const eye = (
   ctx.restore();
   ctx.fill();
 };
-
 export function renderBasicFace(props: BasicFaceProps) {
   const {
     ctx,
@@ -68,7 +65,6 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.fill();
   ctx.restore();
 }
-
 export function renderIcon(props: IconProps) {
   const { ctx } = props;
   const { width, height } = ctx.canvas;
@@ -76,16 +72,20 @@ export function renderIcon(props: IconProps) {
   // Clear the canvas
   ctx.clearRect(0, 0, width, height);
   
-  // Scale factor for the hat
-  const scale = width / 500;
+  // Calculate face radius (same as in renderBasicFace)
+  const faceRadius = width / 2 - 20;
+  const faceCenter = [width / 2, height / 2];
   
-  // Position the hat at the top of the face
-  const offsetX = width / 2;
-  const offsetY = 350 * scale;
+  // Position hat at top of the face circle
+  const hatCenterX = faceCenter[0];
+  const hatTopY = faceCenter[1] - faceRadius;
+  
+  // Scale the hat based on face size
+  const hatScale = (faceRadius * 2) / 500 * 0.35;
   
   ctx.save();
-  ctx.translate(offsetX, offsetY);
-  ctx.scale(scale * 1.3, scale * 1.3);
+  ctx.translate(hatCenterX, hatTopY + 40 * hatScale);
+  ctx.scale(hatScale, hatScale);
   ctx.translate(-376.78 / 2, -152.84 / 2);
   
   // Draw the blue hat shape from SVG path

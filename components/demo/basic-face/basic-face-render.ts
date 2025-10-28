@@ -85,7 +85,7 @@ export function renderIcon(props: IconProps) {
   
   ctx.save();
   ctx.translate(offsetX, offsetY);
-  ctx.scale(scale * 0.3, scale * 0.3);
+  ctx.scale(scale * 0.9, scale * 0.9);
   ctx.translate(-376.78 / 2, -152.84 / 2);
   
   // Draw the blue hat shape from SVG path

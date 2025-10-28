@@ -88,33 +88,39 @@ const hatCanvasSize = canvasSize * hatScale;
 
 
   return (
-    <>
-      <canvas
-        className="basic-face"
-        ref={canvasRef}
-        width={canvasSize}
-        height={canvasSize}
-        style={{
-          display: 'block',
-          borderRadius: '50%',
-          transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,
-        }}
-      />
-      <canvas
-  className="icon-overlay"
-  ref={iconCanvasRef}
-  width={hatCanvasSize}
-  height={hatCanvasSize}
-  style={{
-    position: 'absolute',
-    top: 0,
-    left: '50%',
-    marginLeft: -hatCanvasSize / 2,
-    display: 'block',
-    pointerEvents: 'none',
-    transform: `translateY(${hoverPosition+150}px) rotate(${tiltAngle}deg)`,
-        }}
-      />
-    </>
-  );
+  <div
+    style={{
+      position: 'relative',
+      width: canvasSize,
+      height: canvasSize,
+      transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,
+      margin: '0 auto',
+    }}
+  >
+    <canvas
+      className="basic-face"
+      ref={canvasRef}
+      width={canvasSize}
+      height={canvasSize}
+      style={{
+        display: 'block',
+        borderRadius: '50%',
+      }}
+    />
+    <canvas
+      className="icon-overlay"
+      ref={iconCanvasRef}
+      width={hatCanvasSize}
+      height={hatCanvasSize}
+      style={{
+        position: 'absolute',
+        top: -canvasSize * 0.4, // чуть выше головы
+        left: '50%',
+        transform: `translateX(-50%) scale(${scale})`,
+        pointerEvents: 'none',
+      }}
+    />
+  </div>
+);
+
 }

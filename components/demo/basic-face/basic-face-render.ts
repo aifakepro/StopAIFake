@@ -7,6 +7,7 @@ type BasicFaceProps = {
   mouthScale: number;
   eyeScale: number;
   color?: string;
+  hatY?: number; // Ви зможете підняти/опустити шляпу цим параметром
 };
 
 const eye = (
@@ -34,39 +35,32 @@ const drawHat = (
   ctx.translate(centerX, centerY);
   ctx.scale(scale, scale);
   
-  // SVG viewBox was "0 0 376.78 152.84", so we center it
-  ctx.translate(-188.39, -76.42);
-  
-  // Gradient for the hat base
+  // Градієнт з вашого SVG
   const gradient = ctx.createLinearGradient(-22.37, 132.91, 543.7, 132.91);
   gradient.addColorStop(0.04, '#5092ff');
   gradient.addColorStop(0.53, '#7ec5ff');
   gradient.addColorStop(0.94, '#457fff');
   
-  // Draw the main hat shape using Path2D with the original SVG path
+  // Основна форма шляпи (path з вашого SVG)
   const hatPath = new Path2D('M93.67,171.33c-.57-5,5.17-5.67,9.33-18,5.83-17.26-2.1-25.8-2-52.66.06-15.77.1-26.86,7.33-34.67,11-11.84,31.81-9,39.34-8,46.51,5.89,93.79-1,140.66,0,49.61,1.11,99.23,11.56,148.67,7.33,5.42-.46,19.73-1.84,27.33,6.67,8.49,9.49,1.69,23.5.67,51.33-1.21,32.81,7.33,37.64,3.33,48.67-8.77,24.18-82.27,38.53-190,36.67C99.47,205.57,94.86,181.87,93.67,171.33Z');
   
-  // Transform to account for the SVG transform
   ctx.translate(-93.13, -56.49);
-  
   ctx.fillStyle = gradient;
   ctx.strokeStyle = '#5a90cc';
   ctx.lineWidth = 1;
   ctx.fill(hatPath);
   ctx.stroke(hatPath);
   
-  // Draw the vertical orange rectangle (cross on the hat)
+  // Перший прямокутник (вертикальний)
   ctx.fillStyle = '#dc5513';
-  
-  // First rectangle (vertical)
   ctx.beginPath();
-  ctx.roundRect(176.28 + 93.13, 53.51 + 56.49, 29.59, 54, 8.33);
+  ctx.roundRect(176.28, 53.51, 29.59, 54, 8.33);
   ctx.fill();
   
-  // Second rectangle (horizontal) - we need to rotate it
+  // Другий прямокутник (горизонтальний, повернутий)
   ctx.save();
-  ctx.translate(269.81 + 93.13 + 29.59/2, 105.6 + 56.49 + 64.79/2);
-  ctx.rotate(-Math.PI / 2);
+  ctx.translate(269.81 + 29.59/2, 105.6 + 64.79/2);
+  ctx.rotate(-Math.PI/2);
   ctx.beginPath();
   ctx.roundRect(-29.59/2, -64.79/2, 29.59, 64.79, 8.33);
   ctx.fill();
@@ -81,6 +75,7 @@ export function renderBasicFace(props: BasicFaceProps) {
     eyeScale: eyesOpenness,
     mouthScale: mouthOpenness,
     color,
+    hatY = -150, // Дефолтна позиція, ви можете змінити
   } = props;
   const { width, height } = ctx.canvas;
   
@@ -93,10 +88,9 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.arc(width / 2, height / 2, width / 2 - 20, 0, Math.PI * 2);
   ctx.fill();
   
-  // Draw the hat (centered at top of face, adjust Y position as needed)
-  const hatScale = (width / 2) / 200; // Scale based on face size
-  const hatY = height / 2 - width / 2.5; // Position above the face
-  drawHat(ctx, width / 2, hatY, hatScale);
+  // Малюємо шляпу по центру
+  const hatScale = width / 800;
+  drawHat(ctx, width / 2, height / 2 + hatY, hatScale);
   
   const eyesCenter = [width / 2, height / 2.425];
   const eyesOffset = width / 15;

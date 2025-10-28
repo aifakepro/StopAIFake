@@ -2,153 +2,146 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
+import { RefObject, useEffect, useState, useRef } from 'react';
+import { renderBasicFace } from './basic-face-render';
+import useFace from '../../../hooks/demo/use-face';
+import useHover from '../../../hooks/demo/use-hover';
+import useTilt from '../../../hooks/demo/use-tilt';
+import { useLiveAPIContext } from '../../../contexts/LiveAPIContext';
+
+// Minimum volume level that indicates audio output is occurring
+const AUDIO_OUTPUT_DETECTION_THRESHOLD = 0.05;
+// Amount of delay between end of audio output and setting talking state to false
+const TALKING_STATE_COOLDOWN_MS = 2000;
+
 type BasicFaceProps = {
-  ctx: CanvasRenderingContext2D;
-  mouthScale: number;
-  eyeScale: number;
+  /** The canvas element on which to render the face. */
+  canvasRef: RefObject<HTMLCanvasElement | null>;
+  /** The radius of the face. */
+  radius?: number;
+  /** The color of the face. */
   color?: string;
+  /** Path to texture image - default: '/path/to/texture.png' */
+  texturePath?: string;
+  /** Path to hat image - default: '/path/to/hat.png' */
+  hatPath?: string;
 };
 
-// Кэш для загруженных изображений
-const imageCache: { [key: string]: HTMLImageElement } = {};
-
-const loadImage = (url: string): Promise<HTMLImageElement> => {
-  if (imageCache[url]) {
-    return Promise.resolve(imageCache[url]);
-  }
+export default function BasicFace({
+  canvasRef,
+  radius = 250,
+  color,
+  texturePath,
+  hatPath,
+}: BasicFaceProps) {
+  const timeoutRef = useRef<NodeJS.Timeout>(null);
   
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      imageCache[url] = img;
-      resolve(img);
-    };
-    img.onerror = reject;
-    img.src = url;
+  // Audio output volume
+  const { volume } = useLiveAPIContext();
+  
+  // Talking state
+  const [isTalking, setIsTalking] = useState(false);
+  const [scale, setScale] = useState(0.1);
+  
+  // Face state
+  const { eyeScale, mouthScale } = useFace();
+  const hoverPosition = useHover();
+  const tiltAngle = useTilt({
+    maxAngle: 5,
+    speed: 0.075,
+    isActive: isTalking,
   });
-};
-
-const eye = (
-  ctx: CanvasRenderingContext2D,
-  pos: [number, number],
-  radius: number,
-  scaleY: number
-) => {
-  ctx.save();
-  ctx.translate(pos[0], pos[1]);
-  ctx.scale(1, scaleY);
-  ctx.beginPath();
-  ctx.arc(0, 0, radius, 0, Math.PI * 2);
-  ctx.restore();
-  ctx.fill();
-};
-
-export function renderBasicFace(props: BasicFaceProps) {
-  const {
-    ctx,
-    eyeScale: eyesOpenness,
-    mouthScale: mouthOpenness,
-    color,
-  } = props;
   
-  // Get actual display size
-  const displayWidth = ctx.canvas.width;
-  const displayHeight = ctx.canvas.height;
+  // Image loading
+  const [textureImage, setTextureImage] = useState<HTMLImageElement | null>(null);
+  const [hatImage, setHatImage] = useState<HTMLImageElement | null>(null);
   
-  // Apply pixel ratio scaling
-  const dpr = window.devicePixelRatio || 1;
-  const width = displayWidth / dpr;
-  const height = displayHeight / dpr;
-  
-  // Clear the canvas
-  ctx.clearRect(0, 0, displayWidth, displayHeight);
-  
-  // Scale context to match device pixel ratio
-  ctx.save();
-  ctx.scale(dpr, dpr);
-  
-  const faceRadius = width / 2 - 20;
-  const centerX = width / 2;
-  const centerY = height / 2;
-  
-  // Draw the background circle with texture
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, faceRadius, 0, Math.PI * 2);
-  ctx.clip();
-  
-  // Fill with color first
-  ctx.fillStyle = color || 'white';
-  ctx.fill();
-  
-  // Try to draw texture with image smoothing
-  const textureImg = imageCache['https://i.ibb.co/7dNm0Ksz/BOTmed1.jpg'];
-  if (textureImg && textureImg.complete) {
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.globalAlpha = 1.0;
-    ctx.drawImage(textureImg, centerX - faceRadius, centerY - faceRadius, faceRadius * 2, faceRadius * 2);
-    ctx.globalAlpha = 1.0;
-  }
-  
-  ctx.restore();
-  
-  const eyesCenter = [width / 2, height / 2.425];
-  const eyesOffset = width / 15;
-  const eyeRadius = width / 30;
-  const eyesPosition: Array<[number, number]> = [
-    [eyesCenter[0] - eyesOffset, eyesCenter[1]],
-    [eyesCenter[0] + eyesOffset, eyesCenter[1]],
-  ];
-  
-  // Draw the eyes
-  ctx.fillStyle = 'black';
-  eye(ctx, eyesPosition[0], eyeRadius, eyesOpenness + 0.1);
-  eye(ctx, eyesPosition[1], eyeRadius, eyesOpenness + 0.1);
-  
-  const mouthCenter = [width / 2, (height / 2.875) * 1.55];
-  const mouthExtent = [width / 10, (height / 5) * mouthOpenness + 10];
-  
-  // Draw the mouth
-  ctx.save();
-  ctx.translate(mouthCenter[0], mouthCenter[1]);
-  ctx.scale(1, mouthOpenness + height * 0.002);
-  ctx.fillStyle = 'black';
-  ctx.beginPath();
-  ctx.ellipse(0, 0, mouthExtent[0], mouthExtent[1], 0, 0, Math.PI, false);
-  ctx.ellipse(0, 0, mouthExtent[0], mouthExtent[1] * 0.45, 0, 0, Math.PI, true);
-  ctx.fill();
-  ctx.restore();
-  
-  // Draw the hat with adaptive sizing and high quality
-  const hatImg = imageCache['https://i.ibb.co/mVxKD0T8/kapBot1.png'];
-  if (hatImg && hatImg.complete) {
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
+  // Load texture and hat images
+  useEffect(() => {
+    const TEXTURE_URL = texturePath || 'https://i.ibb.co/Q34VxmGm/waves.jpg';
+    const HAT_URL = hatPath || 'https://i.ibb.co/d4tfjJ1K/kapBot.png';
     
-    const isMobile = width < 780;
-    
-    if (isMobile) {
-      // МОБИЛЬНЫЙ - меняй здесь
-      const hatWidth = width * 0.7;  // <-- ТУТ РАЗМЕР
-      const hatHeight = (hatImg.height / hatImg.width) * hatWidth;
-      const hatX = centerX - hatWidth / 2;
-      const hatY = centerY - faceRadius - hatHeight * 0.15;  // <-- ТУТ ОТСТУП
-      ctx.drawImage(hatImg, hatX, hatY, hatWidth, hatHeight);
-    } else {
-      // ПК - меняй здесь
-      const hatWidth = width * 1.4;  // <-- ТУТ РАЗМЕР
-      const hatHeight = (hatImg.height / hatImg.width) * hatWidth;
-      const hatX = centerX - hatWidth / 2;
-      const hatY = centerY - faceRadius - hatHeight * 0.3;  // <-- ТУТ ОТСТУП
-      ctx.drawImage(hatImg, hatX, hatY, hatWidth, hatHeight);
+    if (TEXTURE_URL) {
+      const texture = new Image();
+      texture.crossOrigin = 'anonymous';
+      texture.src = TEXTURE_URL;
+      texture.onload = () => setTextureImage(texture);
+      texture.onerror = () => console.error('Failed to load texture from:', TEXTURE_URL);
     }
-  }
+    
+    if (HAT_URL) {
+      const hat = new Image();
+      hat.crossOrigin = 'anonymous';
+      hat.src = HAT_URL;
+      hat.onload = () => setHatImage(hat);
+      hat.onerror = () => console.error('Failed to load hat from:', HAT_URL);
+    }
+  }, [texturePath, hatPath]);
   
-  ctx.restore(); // Restore scale
+  // Calculate scale for responsive sizing
+  useEffect(() => {
+    function calculateScale() {
+      setScale(Math.min(window.innerWidth, window.innerHeight) / 1000);
+    }
+    window.addEventListener('resize', calculateScale);
+    calculateScale();
+    return () => window.removeEventListener('resize', calculateScale);
+  }, []);
+  
+  // Set canvas resolution with device pixel ratio
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const displaySize = radius * 2 * scale;
+    const dpr = window.devicePixelRatio || 1;
+    
+    // Set actual size in memory (accounting for device pixel ratio)
+    canvas.width = displaySize * dpr;
+    canvas.height = displaySize * dpr;
+    
+    // Set CSS display size
+    canvas.style.width = `${displaySize}px`;
+    canvas.style.height = `${displaySize}px`;
+  }, [canvasRef, radius, scale]);
+  
+  // Detect whether the agent is talking based on audio output volume
+  // Set talking state when volume is detected
+  useEffect(() => {
+    if (volume > AUDIO_OUTPUT_DETECTION_THRESHOLD) {
+      setIsTalking(true);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      // Enforce a slight delay between end of audio output and setting talking state to false
+      timeoutRef.current = setTimeout(
+        () => setIsTalking(false),
+        TALKING_STATE_COOLDOWN_MS
+      );
+    }
+  }, [volume]);
+  
+  // Render the face on the canvas
+  useEffect(() => {
+    const ctx = canvasRef.current?.getContext('2d');
+    if (!ctx) return;
+    
+    renderBasicFace({ 
+      ctx, 
+      mouthScale, 
+      eyeScale, 
+      color,
+      textureImage,
+      hatImage
+    });
+  }, [canvasRef, volume, eyeScale, mouthScale, color, scale, textureImage, hatImage]);
+  
+  return (
+    <canvas
+      className="basic-face"
+      ref={canvasRef}
+      style={{
+        display: 'block',
+        transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,
+      }}
+    />
+  );
 }
-
-// Предзагрузка изображений
-loadImage('https://i.ibb.co/7dNm0Ksz/BOTmed1.jpg').catch(console.error);
-loadImage('https://i.ibb.co/mVxKD0T8/kapBot1.png').catch(console.error);

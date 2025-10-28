@@ -1,14 +1,32 @@
-import { RefObject, useEffect, useState, useRef } from 'react';
-
-// Minimum volume level that indicates audio output is occurring
-const AUDIO_OUTPUT_DETECTION_THRESHOLD = 0.05;
-// Amount of delay between end of audio output and setting talking state to false
-const TALKING_STATE_COOLDOWN_MS = 2000;
-
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+*/
 type BasicFaceProps = {
-  canvasRef: RefObject<HTMLCanvasElement | null>;
-  radius?: number;
+  ctx: CanvasRenderingContext2D;
+  mouthScale: number;
+  eyeScale: number;
   color?: string;
+};
+
+// Кэш для загруженных изображений
+const imageCache: { [key: string]: HTMLImageElement } = {};
+
+const loadImage = (url: string): Promise<HTMLImageElement> => {
+  if (imageCache[url]) {
+    return Promise.resolve(imageCache[url]);
+  }
+  
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      imageCache[url] = img;
+      resolve(img);
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
 };
 
 const eye = (
@@ -26,7 +44,7 @@ const eye = (
   ctx.fill();
 };
 
-function renderBasicFace(props: any) {
+export function renderBasicFace(props: BasicFaceProps) {
   const {
     ctx,
     eyeScale: eyesOpenness,
@@ -35,12 +53,32 @@ function renderBasicFace(props: any) {
   } = props;
   const { width, height } = ctx.canvas;
   
+  // Clear the canvas
   ctx.clearRect(0, 0, width, height);
   
-  ctx.fillStyle = color || 'white';
+  const faceRadius = width / 2 - 20;
+  const centerX = width / 2;
+  const centerY = height / 2;
+  
+  // Draw the background circle with texture
+  ctx.save();
   ctx.beginPath();
-  ctx.arc(width / 2, height / 2, width / 2 - 20, 0, Math.PI * 2);
+  ctx.arc(centerX, centerY, faceRadius, 0, Math.PI * 2);
+  ctx.clip();
+  
+  // Fill with color first
+  ctx.fillStyle = color || 'white';
   ctx.fill();
+  
+  // Try to draw texture
+  const textureImg = imageCache['https://i.ibb.co/7dNm0Ksz/BOTmed1.jpg'];
+  if (textureImg && textureImg.complete) {
+    ctx.globalAlpha = 1.0;
+    ctx.drawImage(textureImg, centerX - faceRadius, centerY - faceRadius, faceRadius * 2, faceRadius * 2);
+    ctx.globalAlpha = 1.0;
+  }
+  
+  ctx.restore();
   
   const eyesCenter = [width / 2, height / 2.425];
   const eyesOffset = width / 15;
@@ -50,6 +88,7 @@ function renderBasicFace(props: any) {
     [eyesCenter[0] + eyesOffset, eyesCenter[1]],
   ];
   
+  // Draw the eyes
   ctx.fillStyle = 'black';
   eye(ctx, eyesPosition[0], eyeRadius, eyesOpenness + 0.1);
   eye(ctx, eyesPosition[1], eyeRadius, eyesOpenness + 0.1);
@@ -57,6 +96,7 @@ function renderBasicFace(props: any) {
   const mouthCenter = [width / 2, (height / 2.875) * 1.55];
   const mouthExtent = [width / 10, (height / 5) * mouthOpenness + 10];
   
+  // Draw the mouth
   ctx.save();
   ctx.translate(mouthCenter[0], mouthCenter[1]);
   ctx.scale(1, mouthOpenness + height * 0.002);
@@ -66,88 +106,30 @@ function renderBasicFace(props: any) {
   ctx.ellipse(0, 0, mouthExtent[0], mouthExtent[1] * 0.45, 0, 0, Math.PI, true);
   ctx.fill();
   ctx.restore();
+  
+  // Draw the hat with adaptive sizing
+  const hatImg = imageCache['https://i.ibb.co/mVxKD0T8/kapBot1.png'];
+  if (hatImg && hatImg.complete) {
+    const isMobile = width < 780;
+    
+    if (isMobile) {
+      // МОБИЛЬНЫЙ - меняй здесь
+      const hatWidth = width * 0.7;  // <-- ТУТ РАЗМЕР
+      const hatHeight = (hatImg.height / hatImg.width) * hatWidth;
+      const hatX = centerX - hatWidth / 2;
+      const hatY = centerY - faceRadius - hatHeight * 0.15;  // <-- ТУТ ОТСТУП
+      ctx.drawImage(hatImg, hatX, hatY, hatWidth, hatHeight);
+    } else {
+      // ПК - меняй здесь
+      const hatWidth = width * 1.4;  // <-- ТУТ РАЗМЕР
+      const hatHeight = (hatImg.height / hatImg.width) * hatWidth;
+      const hatX = centerX - hatWidth / 2;
+      const hatY = centerY - faceRadius - hatHeight * 0.3;  // <-- ТУТ ОТСТУП
+      ctx.drawImage(hatImg, hatX, hatY, hatWidth, hatHeight);
+    }
+  }
 }
 
-export default function BasicFace({
-  canvasRef,
-  radius = 250,
-  color,
-}: BasicFaceProps) {
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [volume, setVolume] = useState(0);
-  const [isTalking, setIsTalking] = useState(false);
-  const [scale, setScale] = useState(0.1);
-  const [eyeScale, setEyeScale] = useState(1);
-  const [mouthScale, setMouthScale] = useState(0);
-  const [hoverPosition, setHoverPosition] = useState(0);
-  const [tiltAngle, setTiltAngle] = useState(0);
-
-  useEffect(() => {
-    function calculateScale() {
-      setScale(Math.min(window.innerWidth, window.innerHeight) / 1000);
-    }
-    window.addEventListener('resize', calculateScale);
-    calculateScale();
-    return () => window.removeEventListener('resize', calculateScale);
-  }, []);
-
-  useEffect(() => {
-    if (volume > AUDIO_OUTPUT_DETECTION_THRESHOLD) {
-      setIsTalking(true);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(
-        () => setIsTalking(false),
-        TALKING_STATE_COOLDOWN_MS
-      );
-    }
-  }, [volume]);
-
-  useEffect(() => {
-    const ctx = canvasRef.current?.getContext('2d');
-    if (ctx) {
-      renderBasicFace({ ctx, mouthScale, eyeScale, color });
-    }
-  }, [canvasRef, volume, eyeScale, mouthScale, color, scale]);
-
-  return (
-    <div style={{ position: 'relative', display: 'inline-block' }}>
-      <svg 
-        id="hat" 
-        xmlns="http://www.w3.org/2000/svg" 
-        viewBox="0 0 376.78 152.84"
-        style={{
-          position: 'absolute',
-          width: radius * 2 * scale * 0.8,
-          height: 'auto',
-          top: -80 * scale,
-          left: '50%',
-          transform: `translateX(-50%) translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,
-          pointerEvents: 'none',
-          zIndex: 10
-        }}
-      >
-        <defs>
-          <linearGradient id="gradient" x1="-22.37" y1="132.91" x2="543.7" y2="132.91" gradientUnits="userSpaceOnUse">
-            <stop offset="0.04" stopColor="#5092ff"/>
-            <stop offset="0.53" stopColor="#7ec5ff"/>
-            <stop offset="0.94" stopColor="#457fff"/>
-          </linearGradient>
-        </defs>
-        <path d="M93.67,171.33c-.57-5,5.17-5.67,9.33-18,5.83-17.26-2.1-25.8-2-52.66.06-15.77.1-26.86,7.33-34.67,11-11.84,31.81-9,39.34-8,46.51,5.89,93.79-1,140.66,0,49.61,1.11,99.23,11.56,148.67,7.33,5.42-.46,19.73-1.84,27.33,6.67,8.49,9.49,1.69,23.5.67,51.33-1.21,32.81,7.33,37.64,3.33,48.67-8.77,24.18-82.27,38.53-190,36.67C99.47,205.57,94.86,181.87,93.67,171.33Z" transform="translate(-93.13 -56.49)" style={{stroke:'#5a90cc', strokeMiterlimit:10, fill:'url(#gradient)'}}/>
-        <rect x="176.28" y="53.51" width="29.59" height="54" rx="8.33" style={{fill:'#dc5513'}}/>
-        <rect x="269.81" y="105.6" width="29.59" height="64.79" rx="8.33" transform="translate(53.48 366.11) rotate(-90)" style={{fill:'#dc5513'}}/>
-      </svg>
-      <canvas
-        className="basic-face"
-        ref={canvasRef}
-        width={radius * 2 * scale}
-        height={radius * 2 * scale}
-        style={{
-          display: 'block',
-          borderRadius: '50%',
-          transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,
-        }}
-      />
-    </div>
-  );
-}
+// Предзагрузка изображений
+loadImage('https://i.ibb.co/7dNm0Ksz/BOTmed1.jpg').catch(console.error);
+loadImage('https://i.ibb.co/mVxKD0T8/kapBot1.png').catch(console.error);

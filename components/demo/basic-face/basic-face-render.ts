@@ -106,8 +106,8 @@ export function renderBasicFace(props: BasicFaceProps) {
     svgElement.style.pointerEvents = 'none';
     svgElement.style.width = '380px';   // ← подгони вручную под ПК
     svgElement.style.height = '160px';  // ← подгони вручную под ПК
-    svgElement.style.left = `${faceX - 190}px`; // центрируем
-    svgElement.style.top = `${faceY - faceRadius - 120}px`; // ставим “на голову”
+    svgElement.style.left = `${faceX - 800}px`; // центрируем
+    svgElement.style.top = `${faceY - faceRadius - 800}px`; // ставим “на голову”
 
     canvasParent.style.position = 'relative';
     canvasParent.appendChild(svgElement);

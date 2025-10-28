@@ -2,18 +2,14 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
+
 type BasicFaceProps = {
   ctx: CanvasRenderingContext2D;
   mouthScale: number;
   eyeScale: number;
   color?: string;
 };
-type IconProps = {
-  ctx: CanvasRenderingContext2D;
-  scale: number;
-  hatYOffset?: number;
-  hatSizeScale?: number;
-};
+
 const eye = (
   ctx: CanvasRenderingContext2D,
   pos: [number, number],
@@ -25,27 +21,23 @@ const eye = (
   ctx.scale(1, scaleY);
   ctx.beginPath();
   ctx.arc(0, 0, radius, 0, Math.PI * 2);
-  ctx.restore();
   ctx.fill();
+  ctx.restore();
 };
+
 export function renderBasicFace(props: BasicFaceProps) {
-  const {
-    ctx,
-    eyeScale: eyesOpenness,
-    mouthScale: mouthOpenness,
-    color,
-  } = props;
+  const { ctx, eyeScale: eyesOpenness, mouthScale: mouthOpenness, color } = props;
   const { width, height } = ctx.canvas;
 
   ctx.clearRect(0, 0, width, height);
 
-  // Лицо
+  // === Лицо ===
   ctx.fillStyle = color || 'white';
   ctx.beginPath();
   ctx.arc(width / 2, height / 2, width / 2 - 20, 0, Math.PI * 2);
   ctx.fill();
 
-  // Глаза
+  // === Глаза ===
   const eyesCenter = [width / 2, height / 2.425];
   const eyesOffset = width / 15;
   const eyeRadius = width / 30;
@@ -57,7 +49,7 @@ export function renderBasicFace(props: BasicFaceProps) {
   eye(ctx, eyesPosition[0], eyeRadius, eyesOpenness + 0.1);
   eye(ctx, eyesPosition[1], eyeRadius, eyesOpenness + 0.1);
 
-  // Рот
+  // === Рот ===
   const mouthCenter = [width / 2, (height / 2.875) * 1.55];
   const mouthExtent = [width / 10, (height / 5) * mouthOpenness + 10];
   ctx.save();
@@ -71,15 +63,15 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.restore();
 
   // === ШЛЯПА ===
-  const faceRadius = width / 2 - 20;
-  const hatScale = (faceRadius * 2) / 500 * 0.9; // можно подправить
-  const hatYOffset = -faceRadius * 0.9; // подвинь вверх/вниз
-
   ctx.save();
+  const faceRadius = width / 2 - 20;
+  const hatScale = (faceRadius * 2) / 500 * 0.9; // масштаб шляпы
+  const hatYOffset = -faceRadius * 0.7; // сдвиг шляпы вверх/вниз
   ctx.translate(width / 2, height / 2 + hatYOffset);
   ctx.scale(hatScale, hatScale);
   ctx.translate(-376.78 / 2, -152.84 / 2);
 
+  // Рисуем синюю шляпу (SVG path)
   const gradient = ctx.createLinearGradient(-115.5, 76.42, 450.57, 76.42);
   gradient.addColorStop(0.04, '#5092ff');
   gradient.addColorStop(0.53, '#7ec5ff');
@@ -93,6 +85,7 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.fill(path2D);
   ctx.stroke(path2D);
 
+  // Красный крест на шляпе
   ctx.fillStyle = '#dc5513';
   ctx.beginPath();
   ctx.roundRect(176.28, 53.51, 29.59, 54, 8.33);
@@ -107,5 +100,5 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.fill();
   ctx.restore();
 
-  ctx.restore();
+  ctx.restore(); // конец шляпы
 }

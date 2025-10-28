@@ -70,41 +70,59 @@ export function renderBasicFace(props: BasicFaceProps) {
 }
 
 export function renderIcon(props: IconProps) {
-  const { ctx, color = '#dc5513' } = props;
+  const { ctx } = props;
   const { width, height } = ctx.canvas;
   
   // Clear the canvas
   ctx.clearRect(0, 0, width, height);
   
-  // Calculate icon dimensions based on canvas size
-  const iconSize = width * 0.15; // Icon is 15% of canvas width
-  const centerX = width / 2;
-  const centerY = height / 2;
-  const rectWidth = iconSize * 0.3;
-  const rectHeight = iconSize * 0.55;
-  const cornerRadius = iconSize * 0.085;
+  // Scale factor for the hat
+  const scale = width / 500;
   
-  ctx.fillStyle = color;
+  // Position the hat at the top of the face
+  const offsetX = width / 2;
+  const offsetY = 30 * scale;
   
-  // Draw vertical rectangle (with rounded corners)
+  ctx.save();
+  ctx.translate(offsetX, offsetY);
+  ctx.scale(scale * 0.3, scale * 0.3);
+  ctx.translate(-376.78 / 2, -152.84 / 2);
+  
+  // Draw the blue hat shape from SVG path
+  const gradient = ctx.createLinearGradient(-115.5, 76.42, 450.57, 76.42);
+  gradient.addColorStop(0.04, '#5092ff');
+  gradient.addColorStop(0.53, '#7ec5ff');
+  gradient.addColorStop(0.94, '#457fff');
+  
+  ctx.fillStyle = gradient;
+  ctx.strokeStyle = '#5a90cc';
+  ctx.lineWidth = 1;
+  
   ctx.beginPath();
-  ctx.roundRect(
-    centerX - rectWidth / 2,
-    centerY - rectHeight / 2,
-    rectWidth,
-    rectHeight,
-    cornerRadius
-  );
+  ctx.moveTo(0.54, 114.84);
+  // Hat path from SVG
+  const path = "M.54,114.84c-.57-5,5.17-5.67,9.33-18,5.83-17.26-2.1-25.8-2-52.66C7.93,28.41,8,17.32,15.21,9.51c11-11.84,31.81-8.95,39.33-8,46.52,5.89,93.79-1,140.67,0,49.6,1.11,99.23,11.56,148.66,7.33,5.42-.46,19.73-1.84,27.34,6.67,8.48,9.49,1.69,23.5.66,51.33-1.21,32.81,7.33,37.64,3.34,48.67-8.77,24.18-82.28,38.53-190,36.67C6.34,149.08,1.74,125.38.54,114.84Z";
+  const path2D = new Path2D(path);
+  ctx.fill(path2D);
+  ctx.stroke(path2D);
+  
+  // Draw the red cross
+  ctx.fillStyle = '#dc5513';
+  
+  // Vertical rectangle
+  ctx.beginPath();
+  ctx.roundRect(176.28, 53.51, 29.59, 54, 8.33);
   ctx.fill();
   
-  // Draw horizontal rectangle (with rounded corners)
+  // Horizontal rectangle
   ctx.beginPath();
-  ctx.roundRect(
-    centerX - rectHeight / 2,
-    centerY - rectWidth / 2,
-    rectHeight,
-    rectWidth,
-    cornerRadius
-  );
+  ctx.roundRect(176.68, 49.11, 29.59, 64.79, 8.33);
+  ctx.save();
+  ctx.translate(191.475, 81.505);
+  ctx.rotate(-Math.PI / 2);
+  ctx.translate(-191.475, -81.505);
+  ctx.roundRect(176.68, 49.11, 29.59, 64.79, 8.33);
   ctx.fill();
-}
+  ctx.restore();
+  
+  ctx.restore();

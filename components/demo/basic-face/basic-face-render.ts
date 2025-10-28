@@ -81,7 +81,7 @@ export function renderIcon(props: IconProps) {
   
   // Position the hat at the top of the face
   const offsetX = width / 2;
-  const offsetY = 30 * scale;
+  const offsetY = 100 * scale;
   
   ctx.save();
   ctx.translate(offsetX, offsetY);

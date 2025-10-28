@@ -78,7 +78,6 @@ export default function BasicFace({
     }
   }, [texturePath, hatPath]);
   
-  // Calculate scale for responsive sizing
   useEffect(() => {
     function calculateScale() {
       setScale(Math.min(window.innerWidth, window.innerHeight) / 1000);
@@ -87,23 +86,6 @@ export default function BasicFace({
     calculateScale();
     return () => window.removeEventListener('resize', calculateScale);
   }, []);
-  
-  // Set canvas resolution with device pixel ratio
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const displaySize = radius * 2 * scale;
-    const dpr = window.devicePixelRatio || 1;
-    
-    // Set actual size in memory (accounting for device pixel ratio)
-    canvas.width = displaySize * dpr;
-    canvas.height = displaySize * dpr;
-    
-    // Set CSS display size
-    canvas.style.width = `${displaySize}px`;
-    canvas.style.height = `${displaySize}px`;
-  }, [canvasRef, radius, scale]);
   
   // Detect whether the agent is talking based on audio output volume
   // Set talking state when volume is detected
@@ -124,6 +106,18 @@ export default function BasicFace({
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
     
+    // Apply high DPI scaling
+    const canvas = ctx.canvas;
+    const dpr = window.devicePixelRatio || 1;
+    const displayWidth = canvas.width;
+    const displayHeight = canvas.height;
+    
+    // Scale canvas for retina displays
+    canvas.width = displayWidth * dpr;
+    canvas.height = displayHeight * dpr;
+    canvas.style.width = `${displayWidth}px`;
+    canvas.style.height = `${displayHeight}px`;
+    
     renderBasicFace({ 
       ctx, 
       mouthScale, 
@@ -138,6 +132,8 @@ export default function BasicFace({
     <canvas
       className="basic-face"
       ref={canvasRef}
+      width={radius * 2 * scale}
+      height={radius * 2 * scale}
       style={{
         display: 'block',
         transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,

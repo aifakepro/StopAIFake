@@ -46,8 +46,19 @@ export function renderBasicFace(props: BasicFaceProps) {
   } = props;
   const { width, height } = ctx.canvas;
 
+  // Получаем DPR для четкости на Retina экранах
+  const dpr = window.devicePixelRatio || 1;
+
   // Clear the canvas
   ctx.clearRect(0, 0, width, height);
+
+  // Масштабируем весь контекст под DPR
+  ctx.save();
+  ctx.scale(1 / dpr, 1 / dpr);
+
+  // Корректируем размеры с учетом DPR
+  const scaledWidth = width * dpr;
+  const scaledHeight = height * dpr;
 
   // --- Векторная отрисовка SVG (вместо круга) ---
   // SVG original viewBox
@@ -55,9 +66,9 @@ export function renderBasicFace(props: BasicFaceProps) {
   const viewBoxH = 430.99;
 
   // Fit preserving aspect ratio and center
-  const scale = Math.min(width / viewBoxW, height / viewBoxH);
-  const offsetX = (width - viewBoxW * scale) / 2;
-  const offsetY = (height - viewBoxH * scale) / 2;
+  const scale = Math.min(scaledWidth / viewBoxW, scaledHeight / viewBoxH);
+  const offsetX = (scaledWidth - viewBoxW * scale) / 2;
+  const offsetY = (scaledHeight - viewBoxH * scale) / 2;
 
   ctx.save();
   // move origin to top-left of SVG area, then scale so 1 unit == SVG unit
@@ -107,12 +118,12 @@ export function renderBasicFace(props: BasicFaceProps) {
   const hPath = roundRectPath(181.83, 62.98, 61.17, 27.94, hrx);
   ctx.fill(hPath);
 
-  ctx.restore(); // restore to canvas pixel coordinates
+  ctx.restore(); // restore to scaled coordinates
 
-  // --- Eyes and mouth (drawn in canvas pixel coordinates as before) ---
-  const eyesCenter = [width / 2, height / 2.425];
-  const eyesOffset = width / 15;
-  const eyeRadius = width / 30;
+  // --- Eyes and mouth (drawn in scaled pixel coordinates) ---
+  const eyesCenter = [scaledWidth / 2, scaledHeight / 2.425];
+  const eyesOffset = scaledWidth / 15;
+  const eyeRadius = scaledWidth / 30;
   const eyesPosition: Array<[number, number]> = [
     [eyesCenter[0] - eyesOffset, eyesCenter[1]],
     [eyesCenter[0] + eyesOffset, eyesCenter[1]],
@@ -123,17 +134,19 @@ export function renderBasicFace(props: BasicFaceProps) {
   eye(ctx, eyesPosition[0], eyeRadius, eyesOpenness + 0.1);
   eye(ctx, eyesPosition[1], eyeRadius, eyesOpenness + 0.1);
 
-  const mouthCenter = [width / 2, (height / 2.875) * 1.55];
-  const mouthExtent = [width / 10, (height / 5) * mouthOpenness + 10];
+  const mouthCenter = [scaledWidth / 2, (scaledHeight / 2.875) * 1.55];
+  const mouthExtent = [scaledWidth / 10, (scaledHeight / 5) * mouthOpenness + 10];
 
   // Draw the mouth
   ctx.save();
   ctx.translate(mouthCenter[0], mouthCenter[1]);
-  ctx.scale(1, mouthOpenness + height * 0.002);
+  ctx.scale(1, mouthOpenness + scaledHeight * 0.002);
   ctx.fillStyle = "black";
   ctx.beginPath();
   ctx.ellipse(0, 0, mouthExtent[0], mouthExtent[1], 0, 0, Math.PI, false);
   ctx.ellipse(0, 0, mouthExtent[0], mouthExtent[1] * 0.45, 0, 0, Math.PI, true);
   ctx.fill();
   ctx.restore();
+
+  ctx.restore(); // restore original context state
 }

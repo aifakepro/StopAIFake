@@ -78,7 +78,6 @@ const hatPath = new Path2D(pathStr);
 
 ctx.save();
 ctx.translate(-22.62, -23.34); // применяем SVG transform
-const grad = ctx.createLinearGradient(48.48, 99.22, 421.58, 99.22);
 grad.addColorStop(0, "#2581c4");
 grad.addColorStop(0.48, "#e3efda");
 grad.addColorStop(1, "#a3c2e7");

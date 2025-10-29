@@ -76,6 +76,7 @@ export function renderBasicFace(props: BasicFaceProps) {
       offsetY = (height - drawHeight) / 2;
     }
     
+    // Draw SVG image
     ctx.drawImage(cachedImage, offsetX, offsetY, drawWidth, drawHeight);
     
     // Draw animated eyes and mouth on top

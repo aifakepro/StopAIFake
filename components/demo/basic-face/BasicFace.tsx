@@ -24,7 +24,7 @@ type BasicFaceProps = {
 
 export default function BasicFace({
   canvasRef,
-  radius = 450,
+  radius = 250,
   color,
 }: BasicFaceProps) {
   const timeoutRef = useRef<NodeJS.Timeout>(null);
@@ -40,13 +40,15 @@ export default function BasicFace({
   });
 
   useEffect(() => {
-    function calculateScale() {
-      setScale(Math.min(window.innerWidth, window.innerHeight) / 1000);
-    }
-    window.addEventListener('resize', calculateScale);
-    calculateScale();
-    return () => window.removeEventListener('resize', calculateScale);
-  }, []);
+  function calculateScale() {
+    const isMobile = window.innerWidth < 768;
+    const divisor = isMobile ? 500 : 1000; // на мобильном больше, на десктопе как было
+    setScale(Math.min(window.innerWidth, window.innerHeight) / divisor);
+  }
+  window.addEventListener('resize', calculateScale);
+  calculateScale();
+  return () => window.removeEventListener('resize', calculateScale);
+}, []);
 
   useEffect(() => {
     if (volume > AUDIO_OUTPUT_DETECTION_THRESHOLD) {

@@ -41,7 +41,7 @@ export const Paul: Agent = {
       "Найкращий лікар — кардіолог Юрій."
       and IMMEDIATELY call the show_image function with the parameters:
       {
-        "imageUrl": "https://i.ibb.co/GfdcvnnD/bench.jpg",
+        "imageUrl": "https://i.ibb.co/Cs9HsnbN/doctor.jpg",
         "caption": "Найкращий лікар — кардіолог Юрій"
       }
     - Do NOT add any additional text or explanations beyond the specified response and function call.

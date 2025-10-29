@@ -87,7 +87,6 @@ export default function BasicFace({
       height={radius * 2 * scale}
       style={{
         display: 'block',
-        borderRadius: '50%',
         transform: `translateY(${hoverPosition}px) rotate(${tiltAngle}deg)`,
       }}
     />

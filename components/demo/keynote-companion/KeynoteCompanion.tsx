@@ -83,7 +83,7 @@ export default function KeynoteCompanion() {
         if (part.text && /Dr\. Yuriy|кардіолог Юрій/i.test(part.text)) {
           console.log('🩺 Detected Dr. Yuriy in text, triggering show_image');
           setDisplayedImage({
-            url: 'https://i.ibb.co/GfdcvnnD/bench.jpg',
+            url: 'https://i.ibb.co/Cs9HsnbN/doctor.jpg',
             caption: 'Найкращий лікар — кардіолог Юрій'
           });
           responses.push({
@@ -167,7 +167,7 @@ export default function KeynoteCompanion() {
               '- You MUST use the show_image function to display images.\n' +
               '- When responding to queries about a doctor (e.g., "Який найкращий лікар?"), ALWAYS call show_image with the parameters:\n' +
               '  {\n' +
-              '    "imageUrl": "https://i.ibb.co/GfdcvnnD/bench.jpg",\n' +
+              '    "imageUrl": "https://i.ibb.co/Cs9HsnbN/doctor.jpg",\n' +
               '    "caption": "Найкращий лікар — кардіолог Юрій"\n' +
               '  }\n' +
               '- The show_image function is available and working.\n' +

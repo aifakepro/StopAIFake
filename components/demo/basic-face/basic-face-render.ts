@@ -25,29 +25,38 @@ export function renderBasicFace(props: BasicFaceProps) {
 
   ctx.clearRect(0, 0, width, height);
 
-  // --- Векторный фон из твоего SVG ---
+  // --- Векторный фон из SVG ---
+  const viewBoxWidth = 426.76;
+  const viewBoxHeight = 430.99;
+  const scaleX = width / viewBoxWidth;
+  const scaleY = height / viewBoxHeight;
+  const offsetX = 0; // можно сдвинуть, если нужно центрировать
+  const offsetY = 0;
 
-  // Градиент Canvas аналогичный <linearGradient>
   const gradient = ctx.createLinearGradient(
-    (48.48 / 426.76) * width,
-    (99.22 / 430.99) * height,
-    (421.58 / 426.76) * width,
-    (99.22 / 430.99) * height
+    48.48 * scaleX + offsetX,
+    99.22 * scaleY + offsetY,
+    421.58 * scaleX + offsetX,
+    99.22 * scaleY + offsetY
   );
   gradient.addColorStop(0, "#2581c4");
   gradient.addColorStop(0.48, "#e3efda");
   gradient.addColorStop(1, "#a3c2e7");
 
-  // Круг из SVG
+  ctx.save();
+  ctx.translate(offsetX, offsetY);
+  ctx.scale(scaleX, scaleY);
+
+  // Круг
   ctx.fillStyle = gradient;
   ctx.beginPath();
-  ctx.arc(width / 2, height / 2, (212.99 / 430.99) * height, 0, Math.PI * 2);
+  ctx.arc(213.38, 217.61, 212.99, 0, Math.PI * 2);
   ctx.fill();
   ctx.strokeStyle = "#cbbba0";
   ctx.lineWidth = 0.79;
   ctx.stroke();
 
-  // Путь из SVG (<path>), нормализованный под Canvas
+  // Путь
   const svgPath = new Path2D(
     `M48.52,137.36c-.57-5,5.13-5.63,9.26-17.87,5.79-17.14-2.08-25.62-2-52.28.06-15.66.13-26.67,7.28-34.43C74,21,94.67,23.9,102.13,24.84c46.19,5.85,93.12-1,139.67,0,49.25,1.1,98.52,11.48,147.6,7.28,5.38-.46,19.59-1.83,27.14,6.62,8.42,9.42,1.68,23.33.66,51-1.2,32.58,7.28,37.37,3.32,48.33-8.71,24-81.7,38.25-188.65,36.4C54.28,171.36,49.71,147.83,48.52,137.36Z`
   );
@@ -57,20 +66,12 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.lineWidth = 0.99;
   ctx.stroke(svgPath);
 
-  // --- Прямоугольники из SVG ---
+  // Прямоугольники
   ctx.fillStyle = "#e30613";
-  ctx.fillRect(
-    (198.44 / 426.76) * width,
-    (50.52 / 430.99) * height,
-    (27.94 / 426.76) * width,
-    (50.99 / 430.99) * height
-  );
-  ctx.fillRect(
-    (181.83 / 426.76) * width,
-    (62.98 / 430.99) * height,
-    (61.17 / 426.76) * width,
-    (27.94 / 430.99) * height
-  );
+  ctx.fillRect(198.44, 50.52, 27.94, 50.99);
+  ctx.fillRect(181.83, 62.98, 61.17, 27.94);
+
+  ctx.restore();
 
   // --- Глаза ---
   const eyesCenter = [width / 2, height / 2.425];

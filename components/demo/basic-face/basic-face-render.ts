@@ -70,14 +70,14 @@ export function renderBasicFace(props: BasicFaceProps) {
   grad.addColorStop(0.48, "#e3efda");
   grad.addColorStop(1, "#a3c2e7");
 
-  // 1) circle (background / body)
-  ctx.beginPath();
-  ctx.arc(213.38, 217.61, 212.99, 0, Math.PI * 2);
+   // 1) circle (background / body)
   ctx.fillStyle = "#fee9cb"; // exactly as in SVG
-  ctx.fill();
   ctx.strokeStyle = "#cbbba0";
   ctx.lineWidth = 0.79;
   ctx.lineJoin = "miter";
+  ctx.beginPath();
+  ctx.arc(213.38, 217.61, 212.99, 0, Math.PI * 2);
+  ctx.fill();
   ctx.stroke();
 
   // 2) path (the decorative shape) — SVG had transform="translate(-22.62 -23.34)"

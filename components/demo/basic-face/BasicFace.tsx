@@ -24,7 +24,7 @@ type BasicFaceProps = {
 
 export default function BasicFace({
   canvasRef,
-  radius = 250,
+  radius = 450,
   color,
 }: BasicFaceProps) {
   const timeoutRef = useRef<NodeJS.Timeout>(null);

@@ -32,7 +32,7 @@ export function renderBasicFace({ ctx, eyeScale, mouthScale, color, hatYOffset =
 
   ctx.save();
   const faceRadius = width / 2 - 20;
-  const faceScale = (faceRadius * 2) / 500 * 0.3;
+  const faceScale = (faceRadius * 2) / 500 * 1.3;
   ctx.translate(width / 2, height / 2 + hatYOffset);
   ctx.scale(faceScale, faceScale);
   ctx.translate(-376.78 / 2, -152.84 / 2);

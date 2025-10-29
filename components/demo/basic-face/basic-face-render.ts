@@ -79,6 +79,7 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.lineWidth = 0.79;
   ctx.lineJoin = "miter";
   ctx.stroke();
+  ctx.closePath()
 
   // 2) path (the decorative shape) — SVG had transform="translate(-22.62 -23.34)"
   const pathStr =
@@ -87,7 +88,6 @@ export function renderBasicFace(props: BasicFaceProps) {
   const hatPath = new Path2D(pathStr);
   ctx.save();
   ctx.translate(-22.62, -23.34); // apply SVG transform for this path
-  ctx.beginPath();
   ctx.fillStyle = grad; // gradient fill as in SVG
   ctx.fill(hatPath);
   ctx.strokeStyle = "#2d2e83";

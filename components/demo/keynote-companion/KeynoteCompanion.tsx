@@ -214,7 +214,7 @@ export default function KeynoteCompanion() {
               maxHeight: '90%',
               background: 'white',
               borderRadius: '16px',
-              padding: '24px',
+              padding: 0,
               boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
             }}
           >
@@ -249,7 +249,7 @@ export default function KeynoteCompanion() {
               onLoad={() => console.log('✅ Image loaded:', displayedImage.url)}
               style={{
                 maxWidth: '100%',
-                maxHeight: '70vh',
+                maxHeight: '100%',
                 borderRadius: '12px',
                 display: 'block',
               }}

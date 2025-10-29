@@ -79,13 +79,13 @@ export function renderBasicFace(props: BasicFaceProps) {
   ctx.lineWidth = 0.79;
   ctx.lineJoin = "miter";
   ctx.stroke();
-  ctx.closePath()
 
   // 2) path (the decorative shape) — SVG had transform="translate(-22.62 -23.34)"
   const pathStr =
     "M48.52,137.36c-.57-5,5.13-5.63,9.26-17.87,5.79-17.14-2.08-25.62-2-52.28.06-15.66.13-26.67,7.28-34.43C74,21,94.67,23.9,102.13,24.84c46.19,5.85,93.12-1,139.67,0,49.25,1.1,98.52,11.48,147.6,7.28,5.38-.46,19.59-1.83,27.14,6.62,8.42,9.42,1.68,23.33.66,51-1.2,32.58,7.28,37.37,3.32,48.33-8.71,24-81.7,38.25-188.65,36.4C54.28,171.36,49.71,147.83,48.52,137.36Z";
 
   const hatPath = new Path2D(pathStr);
+  ctx.beginPath();
   ctx.save();
   ctx.translate(-22.62, -23.34); // apply SVG transform for this path
   ctx.fillStyle = grad; // gradient fill as in SVG

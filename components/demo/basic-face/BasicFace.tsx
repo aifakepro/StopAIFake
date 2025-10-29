@@ -42,7 +42,7 @@ export default function BasicFace({
   useEffect(() => {
   function calculateScale() {
     const isMobile = window.innerWidth < 768;
-    const divisor = isMobile ? 500 : 1000; // на мобильном больше, на десктопе как было
+    const divisor = isMobile ? 600 : 1000; // на мобильном больше, на десктопе как было
     setScale(Math.min(window.innerWidth, window.innerHeight) / divisor);
   }
   window.addEventListener('resize', calculateScale);

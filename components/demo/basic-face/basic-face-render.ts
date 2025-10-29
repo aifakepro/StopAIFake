@@ -2,7 +2,6 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-
 type RenderFaceProps = {
   ctx: CanvasRenderingContext2D;
   mouthScale: number;
@@ -24,26 +23,44 @@ const eye = (ctx: CanvasRenderingContext2D, pos: [number, number], radius: numbe
 export function renderBasicFace({ ctx, eyeScale, mouthScale, color, hatYOffset = -100 }: RenderFaceProps) {
   const { width, height } = ctx.canvas;
   ctx.clearRect(0, 0, width, height);
-
-  // --- Лицо заменяем на шляпу ---
-  const facePath = new Path2D(
-    "M.54,114.84c-.57-5,5.17-5.67,9.33-18,5.83-17.26-2.1-25.8-2-52.66C7.93,28.41,8,17.32,15.21,9.51c11-11.84,31.81-8.95,39.33-8,46.52,5.89,93.79-1,140.67,0,49.6,1.11,99.23,11.56,148.66,7.33,5.42-.46,19.73-1.84,27.34,6.67,8.48,9.49,1.69,23.5.66,51.33-1.21,32.81,7.33,37.64,3.34,48.67-8.77,24.18-82.28,38.53-190,36.67C6.34,149.08,1.74,125.38.54,114.84Z"
+  
+  // --- Шляпа (SVG Path) ---
+  const hatPath = new Path2D(
+    "M48.52,137.36c-.57-5,5.13-5.63,9.26-17.87,5.79-17.14-2.08-25.62-2-52.28.06-15.66.13-26.67,7.28-34.43C74,21,94.67,23.9,102.13,24.84c46.19,5.85,93.12-1,139.67,0,49.25,1.10,98.52,11.48,147.60,7.28,5.38-.46,19.59-1.83,27.14,6.62,8.42,9.42,1.68,23.33.66,51-1.20,32.58,7.28,37.37,3.32,48.33-8.71,24-81.70,38.25-188.65,36.40C54.28,171.36,49.71,147.83,48.52,137.36Z"
   );
-
+  
   ctx.save();
   const faceRadius = width / 2 - 20;
   const faceScale = (faceRadius * 2) / 500 * 1.3;
   ctx.translate(width / 2, height / 2 + hatYOffset);
   ctx.scale(faceScale, faceScale);
-  ctx.translate(-376.78 / 2, -152.84 / 2);
-
-  ctx.fillStyle = color || '#ffffff';
-  ctx.fill(facePath);
-  ctx.strokeStyle = '#000000';
-  ctx.lineWidth = 1;
-  ctx.stroke(facePath);
+  ctx.translate(-213.38, -217.61); // Центр з viewBox SVG
+  
+  // Градієнт для шляпи
+  const gradient = ctx.createLinearGradient(48.48, 99.22, 421.58, 99.22);
+  gradient.addColorStop(0, '#2581c4');
+  gradient.addColorStop(0.48, '#e3efda');
+  gradient.addColorStop(1, '#a3c2e7');
+  
+  ctx.fillStyle = gradient;
+  ctx.fill(hatPath);
+  ctx.strokeStyle = '#2d2e83';
+  ctx.lineWidth = 0.99;
+  ctx.stroke(hatPath);
+  
+  // Червоний хрест (вертикальна частина)
+  ctx.fillStyle = '#e30613';
+  ctx.beginPath();
+  ctx.roundRect(198.44, 50.52, 27.94, 50.99, 7.86);
+  ctx.fill();
+  
+  // Червоний хрест (горизонтальна частина)
+  ctx.beginPath();
+  ctx.roundRect(181.83, 62.98, 61.17, 27.94, 7.86);
+  ctx.fill();
+  
   ctx.restore();
-
+  
   // --- Глаза ---
   const eyesCenter = [width / 2, height / 2.425];
   const eyesOffset = width / 15;
@@ -55,7 +72,7 @@ export function renderBasicFace({ ctx, eyeScale, mouthScale, color, hatYOffset =
   ctx.fillStyle = 'black';
   eye(ctx, eyesPosition[0], eyeRadius, eyeScale + 0.1);
   eye(ctx, eyesPosition[1], eyeRadius, eyeScale + 0.1);
-
+  
   // --- Рот ---
   const mouthCenter = [width / 2, (height / 2.875) * 1.55];
   const mouthExtent = [width / 10, (height / 5) * mouthScale + 10];
